@@ -6,16 +6,7 @@ enum class EstadoReserva  {
     APROBADA,
     RECHAZADA
 }
-// modelo que representa las salas y espacios
-data class Sala(
-    val codigo : String,
-    val nombre:String,
-    val tipo:String,
-    val piso: Int,
-    val capacidad: Int,
-    val caracteristicas: List<String> = emptyList(),
-    val disponibleAhora: Boolean=true
-)
+
 //modelo de bloques horarios
 data class BloqueHorario(
     val id: String,
