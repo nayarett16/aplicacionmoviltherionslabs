@@ -52,7 +52,7 @@ fun ProfesorHomeScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Panel de Relator",
+                        text = "Panel de profesor",
                         color = Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
