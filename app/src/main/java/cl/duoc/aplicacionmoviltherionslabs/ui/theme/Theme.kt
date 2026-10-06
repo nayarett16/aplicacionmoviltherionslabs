@@ -1,50 +1,32 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.theme
 
 import android.app.Activity
-
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
+private val DuocColorScheme = lightColorScheme(
     primary = AzulDuoc,
+    onPrimary = Color.White,
+    primaryContainer = AzulDuoc.copy(alpha = 0.1f),
     secondary = AmarilloDuoc,
-    tertiary = AzulDuoc
+    onSecondary = AzulDuoc,
+    secondaryContainer = AmarilloDuoc.copy(alpha = 0.2f),
+    onSecondaryContainer = AzulOscuroDuoc,
+    background = GrisFondoDuoc,
+    onBackground = AzulOscuroDuoc,
+    surface = Color.White,
+    onSurface = AzulOscuroDuoc,
+    surfaceVariant = Color(0xFFE2E8F0),
+    onSurfaceVariant = TextoGrisDuoc
 )
-
-private val LightColorScheme = lightColorScheme(
-    primary = AzulDuoc,
-    secondary = AmarilloDuoc,
-    tertiary = AzulDuoc
-
-)
-
 @Composable
 fun AplicacionMovilTherionsLabsTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
+   content:@Composable ()-> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = DuocColorScheme,
         typography = Typography,
         content = content
     )

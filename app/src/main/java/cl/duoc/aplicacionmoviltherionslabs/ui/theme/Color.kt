@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 val AzulDuoc=Color(0xFF002B49)
 val AmarilloDuoc=Color(0xFFFFB800)
 val GrisFondoDuoc=Color(0xFFF4F6F8)
-val GrisBordeDuoc = Color(0xFFE0E0E0)
+val AzulOscuroDuoc=Color(0xFF001A2E)
 val TextoGrisDuoc=Color(0xFF666666)
 
 //colores estado de disponibilidad y reserva

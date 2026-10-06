@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,15 +56,18 @@ fun EspaciosScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Espacios", fontWeight = FontWeight.Bold, fontSize = 22.sp)
-                        Text("Relator Demo A • Relator", style = MaterialTheme.typography.bodySmall)
+                        Text("Espacios", fontWeight = FontWeight.Bold, fontSize = 22.sp,color= Color.White)
+                        Text("Relator Demo A • Relator", style = MaterialTheme.typography.bodySmall,color= Color.White.copy(alpha = 0.8f))
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onVolverClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             )
         }
     ) { innerPadding ->
