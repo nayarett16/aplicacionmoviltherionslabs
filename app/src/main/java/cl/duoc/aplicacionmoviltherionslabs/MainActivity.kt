@@ -12,11 +12,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import cl.duoc.aplicacionmoviltherionslabs.ui.screens.CoordinadorHomeScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.EspaciosScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.LoginScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.NuevaSolicitudScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.ProfesorHomeScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.theme.AplicacionMovilTherionsLabsTheme
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,41 +27,50 @@ class MainActivity : ComponentActivity() {
             AplicacionMovilTherionsLabsTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color= MaterialTheme.colorScheme.background
-                ){
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     var pantallaActual by remember { mutableStateOf("login") }
-                    when (pantallaActual){
-                        "login" ->{
+
+                    when (pantallaActual) {
+                        "login" -> {
+                            // Sin parámetros en la lambda para encajar con LoginScreen.kt
                             LoginScreen(
                                 onLoginSuccess = {
-                                    pantallaActual="home"
+                                    pantallaActual = "home_coordinador" // Redirige directamente al coordinador
                                 }
                             )
                         }
-                        "home" ->{
-                            ProfesorHomeScreen (
+                        "home_profesor" -> {
+                            ProfesorHomeScreen(
                                 onBuscarSalasClick = {
-                                    pantallaActual="espacios"
+                                    pantallaActual = "espacios"
                                 },
                                 onNuevaSolicitudClick = {
-                                    pantallaActual="solicitud"
+                                    pantallaActual = "solicitud"
                                 }
                             )
                         }
-                        "espacios"->{
+                        "home_coordinador" -> {
+                            CoordinadorHomeScreen(
+                                onCerrarSesionClick = {
+                                    pantallaActual = "login"
+                                }
+                            )
+                        }
+                        "espacios" -> {
                             EspaciosScreen(
-                                onVolverClick={
-                                    pantallaActual="home"
+                                onVolverClick = {
+                                    pantallaActual = "home_profesor"
                                 }
                             )
                         }
-                        "solicitud"->{
-                            NuevaSolicitudScreen (
+                        "solicitud" -> {
+                            NuevaSolicitudScreen(
                                 onVolverClick = {
-                                    pantallaActual="home"
+                                    pantallaActual = "home_profesor"
                                 },
                                 onSolicitudEnviada = {
-                                    pantallaActual="home"
+                                    pantallaActual = "home_profesor"
                                 }
                             )
                         }
