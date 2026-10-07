@@ -3,7 +3,6 @@ package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,7 +44,7 @@ import cl.duoc.aplicacionmoviltherionslabs.ui.viewmodel.LoginViewModel
 @Composable
 fun LoginScreen(
     loginViewModel: LoginViewModel = viewModel(),
-    onLoginSuccess: () -> Unit = {}
+    onLoginSuccess: (String) -> Unit = {} // <-- Recibe el correo como parámetro
 ) {
     val uiState by loginViewModel.uiState.collectAsState()
 
@@ -151,7 +150,7 @@ fun LoginScreen(
             onClick = {
                 loginViewModel.onLoginClicked()
                 if (uiState.isSuccess) {
-                    onLoginSuccess()
+                    onLoginSuccess(uiState.email) // <-- Pasamos el correo ingresado
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = DuocBlueAccent),

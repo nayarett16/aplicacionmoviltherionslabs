@@ -189,8 +189,8 @@ fun MiReservaCard(solicitud: SolicitudReserva) {
 
             val (colorFondo, colorTexto, texto) = when (solicitud.estado) {
                 EstadoReserva.PENDIENTE -> Triple(Color(0xFFFFF8E1), Color(0xFFF57F17), "Pendiente")
-                EstadoReserva.APROBADA -> Triple(FondoDisponible, VerdeDisponible, "Aprobada")
-                EstadoReserva.RECHAZADA -> Triple(FondoReservado, RojoReservado, "Rechazada")
+                EstadoReserva.APROBADA -> Triple(FondoDisponible, DisponibleVerde, "Aprobada")
+                EstadoReserva.RECHAZADA -> Triple(FondoReservado, DuocErrorRed, "Rechazada")
             }
 
             Surface(

@@ -2,7 +2,7 @@ package cl.duoc.aplicacionmoviltherionslabs.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-<<<<<<< HEAD
+
 //colores institucionales Duoc UC / TherionLabs
 
 val DuocNavy = Color(0xFF001E36)
@@ -16,12 +16,15 @@ val DuocErrorRed = Color(0xFFEF5350)
 
 
 
-=======
+
 //colores institucionales
 val AzulDuoc=Color(0xFF002B49)
 val AmarilloDuoc=Color(0xFFFFB800)
 val GrisFondoDuoc=Color(0xFFF4F6F8)
 val AzulOscuroDuoc=Color(0xFF001A2E)
 val TextoGrisDuoc=Color(0xFF666666)
->>>>>>> 1f2b77e05dd04d7ab85e53b45ce327aa9ad7debe
+val DisponibleVerde = Color(0xFF2E7D32)
+val FondoDisponible = Color(0xFFE8F5E9)
+val FondoReservado =Color(0xFFFFEBEE)
+
 
