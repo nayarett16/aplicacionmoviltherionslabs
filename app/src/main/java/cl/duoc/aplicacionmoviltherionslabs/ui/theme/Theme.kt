@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DuocColorScheme = lightColorScheme(
+
+
     primary = AzulDuoc,
     onPrimary = Color.White,
     primaryContainer = AzulDuoc.copy(alpha = 0.1f),
