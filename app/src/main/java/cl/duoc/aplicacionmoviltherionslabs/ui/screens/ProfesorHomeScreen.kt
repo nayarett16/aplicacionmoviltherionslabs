@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,7 +27,8 @@ import cl.duoc.aplicacionmoviltherionslabs.ui.theme.*
 @Composable
 fun ProfesorHomeScreen(
     onBuscarSalasClick: () -> Unit = {},
-    onNuevaSolicitudClick: () -> Unit = {}
+    onNuevaSolicitudClick: () -> Unit = {},
+    onCerrarSesionClick: () -> Unit = {}
 ) {
     val misReservas = remember {
         listOf(
@@ -44,19 +46,33 @@ fun ProfesorHomeScreen(
                     .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 20.dp)
             ) {
-                Column {
-                    Text(
-                        text = "¡HOLA, DOCENTE!",
-                        color = AmarilloDuoc,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Panel de profesor",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "¡HOLA, DOCENTE!",
+                            color = AmarilloDuoc,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Panel de profesor",
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    IconButton(onClick = onCerrarSesionClick) {
+                        Icon(
+                            imageVector = Icons.Default.ExitToApp,
+                            contentDescription = "Cerrar Sesión",
+                            tint = Color.White
+                        )
+                    }
                 }
             }
         },

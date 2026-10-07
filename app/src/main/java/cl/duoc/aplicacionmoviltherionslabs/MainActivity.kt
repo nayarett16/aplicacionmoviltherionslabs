@@ -33,10 +33,15 @@ class MainActivity : ComponentActivity() {
 
                     when (pantallaActual) {
                         "login" -> {
-                            // Sin parámetros en la lambda para encajar con LoginScreen.kt
                             LoginScreen(
-                                onLoginSuccess = {
-                                    pantallaActual = "home_coordinador" // Redirige directamente al coordinador
+                                onLoginSuccess = { correo ->
+                                    // Evalúa el correo ingresado
+                                    if (correo.contains("coordinacion", ignoreCase = true) ||
+                                        correo.contains("coordinador", ignoreCase = true)) {
+                                        pantallaActual = "home_coordinador"
+                                    } else {
+                                        pantallaActual = "home_profesor"
+                                    }
                                 }
                             )
                         }
@@ -47,6 +52,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onNuevaSolicitudClick = {
                                     pantallaActual = "solicitud"
+                                },
+                                onCerrarSesionClick = {
+                                    pantallaActual = "login"
                                 }
                             )
                         }
