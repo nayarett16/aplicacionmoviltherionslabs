@@ -1,5 +1,6 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,10 +11,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cl.duoc.aplicacionmoviltherionslabs.model.Recurso
+import cl.duoc.aplicacionmoviltherionslabs.data.NotificationHelper
+import cl.duoc.aplicacionmoviltherionslabs.model.RecursoModel
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.ConfirmacionDialog
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.SeleccionadorFechaDialog
@@ -24,6 +29,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaSolicitudScreen(
@@ -31,6 +37,10 @@ fun NuevaSolicitudScreen(
     onVerCalendarioClick: () -> Unit = {},
     onSolicitudCreada: (SolicitudActividad) -> Unit = {}
 ) {
+    // RECURSOS NATIVOS
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
     var nombreActividad by remember { mutableStateOf("") }
     var responsable by remember { mutableStateOf("") }
     var escuelaArea by remember { mutableStateOf("") }
@@ -54,17 +64,19 @@ fun NuevaSolicitudScreen(
         )
     }
 
-    var recursosList by remember {
-        mutableStateOf(
-            listOf(
-                Recurso("1", "Micrófono Inalámbrico", "Área: CTA / Digitales"),
-                Recurso("2", "Proyector Portátil", "Área: CTA / Digitales"),
-                Recurso("3", "Cobertura Fotográfica", "Área: Comunicaciones"),
-                Recurso("4", "Apoyo Aseo / Camarines", "Área: Servicios Generales"),
-                Recurso("5", "Acceso / Control Público", "Área: Portería")
-            )
+    // Lista de recursos
+    val recursosCatalogo = remember {
+        listOf(
+            RecursoModel("1", "Micrófono Inalámbrico", "Área: CTA / Digitales", 5, 5),
+            RecursoModel("2", "Proyector Portátil", "Área: CTA / Digitales", 3, 3),
+            RecursoModel("3", "Cobertura Fotográfica", "Área: Comunicaciones", 2, 2),
+            RecursoModel("4", "Apoyo Aseo / Camarines", "Área: Servicios Generales", 10, 10),
+            RecursoModel("5", "Acceso / Control Público", "Área: Portería", 4, 4)
         )
     }
+
+    // Control de selección local mediante IDs
+    var idsSeleccionados by remember { mutableStateOf(setOf<String>()) }
 
     Scaffold(
         topBar = {
@@ -78,17 +90,23 @@ fun NuevaSolicitudScreen(
                     )
                 },
                 navigationIcon = {
-                    TextButton(onClick = onVolverClick) {
+                    TextButton(onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onVolverClick()
+                    }) {
                         Text("← Volver", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
                 actions = {
-                    IconButton(onClick = onVerCalendarioClick) {
+                    IconButton(onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onVerCalendarioClick()
+                    }) {
                         Text("📅 Agenda", fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF002A5C) // GUINCHA AZUL
+                    containerColor = Color(0xFF002A5C)
                 )
             )
         }
@@ -97,7 +115,7 @@ fun NuevaSolicitudScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color.White) // FONDO BLANCO
+                .background(Color.White)
                 .padding(16.dp)
         ) {
             OutlinedTextField(
@@ -169,7 +187,8 @@ fun NuevaSolicitudScreen(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(recursosList) { recurso ->
+                items(recursosCatalogo) { recurso ->
+                    val estaSeleccionado = idsSeleccionados.contains(recurso.id)
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
                         shape = RoundedCornerShape(8.dp),
@@ -196,11 +215,12 @@ fun NuevaSolicitudScreen(
                                 )
                             }
                             Checkbox(
-                                checked = recurso.seleccionado,
+                                checked = estaSeleccionado,
                                 onCheckedChange = { checked ->
-                                    recursosList = recursosList.map { item ->
-                                        if (item.id == recurso.id) item.copy(seleccionado = checked)
-                                        else item
+                                    idsSeleccionados = if (checked) {
+                                        idsSeleccionados + recurso.id
+                                    } else {
+                                        idsSeleccionados - recurso.id
                                     }
                                 },
                                 colors = CheckboxDefaults.colors(checkedColor = Color(0xFF002A5C))
@@ -222,12 +242,12 @@ fun NuevaSolicitudScreen(
 
             Button(
                 onClick = {
-                    val recursosSeleccionados = recursosList.filter { it.seleccionado }
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     if (nombreActividad.isBlank() || responsable.isBlank() || escuelaArea.isBlank()) {
                         mensajeError = "Por favor completa todos los campos de texto."
                     } else if (fechaMillis == null || !horaSeleccionada) {
                         mensajeError = "Debes seleccionar fecha y hora para la actividad."
-                    } else if (recursosSeleccionados.isEmpty()) {
+                    } else if (idsSeleccionados.isEmpty()) {
                         mensajeError = "Debes seleccionar al menos un recurso."
                     } else {
                         mensajeError = null
@@ -235,7 +255,7 @@ fun NuevaSolicitudScreen(
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFC107), // BOTÓN AMARILLO
+                    containerColor = Color(0xFFFFC107),
                     contentColor = Color(0xFF002A5C)
                 ),
                 shape = RoundedCornerShape(8.dp),
@@ -256,13 +276,11 @@ fun NuevaSolicitudScreen(
         SeleccionadorFechaDialog(
             onFechaSeleccionada = { millis ->
                 millis?.let {
-                    // Configurar Calendario explícitamente en UTC para evitar el desfase de zona horaria
                     val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
                         timeInMillis = it
                     }
                     val diaSemana = cal.get(Calendar.DAY_OF_WEEK)
 
-                    // Formateadores configurados en UTC
                     val formatoDiaMes = SimpleDateFormat("dd/MM", Locale.getDefault()).apply {
                         timeZone = TimeZone.getTimeZone("UTC")
                     }.format(Date(it))
@@ -282,7 +300,7 @@ fun NuevaSolicitudScreen(
                     } else {
                         mensajeError = null
                         fechaMillis = it
-                        fechaTexto = formatoCompleto // Muestra exactamente la fecha seleccionada (ej: 30/10/2026)
+                        fechaTexto = formatoCompleto
                     }
                 }
             },
@@ -307,6 +325,21 @@ fun NuevaSolicitudScreen(
             textoConfirmar = "Enviar",
             onConfirmar = {
                 mostrarConfirmacion = false
+
+                // RECURSO NATIVO 1: Vibración
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+
+                // RECURSO NATIVO 2: Notificación Local del Sistema
+                NotificationHelper.mostrarNotificacionSolicitud(
+                    context = context,
+                    titulo = "¡Solicitud Enviada con Éxito! 🚀",
+                    mensaje = "Tu solicitud '$nombreActividad' ha sido registrada correctamente."
+                )
+
+                val nombresRecursosSeleccionados = recursosCatalogo
+                    .filter { idsSeleccionados.contains(it.id) }
+                    .map { it.nombre }
+
                 val nuevaSolicitud = SolicitudActividad(
                     id = System.currentTimeMillis().toString(),
                     nombreActividad = nombreActividad,
@@ -314,7 +347,7 @@ fun NuevaSolicitudScreen(
                     escuelaArea = escuelaArea,
                     fechaTexto = fechaTexto,
                     horaTexto = horaTexto,
-                    recursosSeleccionados = recursosList.filter { it.seleccionado }.map { it.nombre },
+                    recursosSeleccionados = nombresRecursosSeleccionados,
                     estadoComunicaciones = "Pendiente",
                     estadoServiciosGenerales = "Pendiente",
                     estadoCTA = "Pendiente",

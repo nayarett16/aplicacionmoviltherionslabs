@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 
+
 enum class TipoEntidad(val nombreArea: String, val palabrasClave: List<String>) {
     CTA("CTA / Digitales", listOf("Micrófono", "Proyector")),
     COMUNICACIONES("Comunicaciones", listOf("Fotográfica", "Cobertura")),
