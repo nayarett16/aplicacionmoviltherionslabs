@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
                     var pantallaActual by remember { mutableStateOf("login") }
                     var pantallaAnterior by remember { mutableStateOf("home_profesor") }
                     var solicitudSeleccionada by remember { mutableStateOf<SolicitudActividad?>(null) }
+                    var entidadLogueada by remember { mutableStateOf<TipoEntidad?>(null) }
 
                     val listaSolicitudes = remember { mutableStateListOf<SolicitudActividad>() }
 
@@ -33,11 +34,23 @@ class MainActivity : ComponentActivity() {
                         "login" -> {
                             LoginScreen(
                                 onLoginSuccess = { correo ->
-                                    if (correo.contains("coordinacion", ignoreCase = true) ||
-                                        correo.contains("coordinador", ignoreCase = true)) {
-                                        pantallaActual = "home_coordinador"
-                                    } else {
-                                        pantallaActual = "home_profesor"
+                                    val correoLibrería = correo.lowercase().trim()
+                                    val entidad = TipoEntidad.desdeCorreo(correoLibrería)
+
+                                    when {
+                                        correoLibrería.contains("extension") ||
+                                                correoLibrería.contains("coordinacion") ||
+                                                correoLibrería.contains("coordinador") -> {
+                                            pantallaActual = "home_coordinador"
+                                        }
+                                        entidad != null -> {
+                                            entidadLogueada = entidad
+                                            pantallaActual = "home_entidad"
+                                        }
+                                        else -> {
+                                            // Por defecto: Comunidad / Docentes
+                                            pantallaActual = "home_profesor"
+                                        }
                                     }
                                 }
                             )
@@ -100,6 +113,31 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        "home_entidad" -> {
+                            entidadLogueada?.let { entidad ->
+                                EntidadHomeScreen(
+                                    entidad = entidad,
+                                    solicitudes = listaSolicitudes,
+                                    onCambiarEstado = { id, nuevoEstado ->
+                                        val index = listaSolicitudes.indexOfFirst { it.id == id }
+                                        if (index != -1) {
+                                            val item = listaSolicitudes[index]
+                                            val itemActualizado = when (entidad) {
+                                                TipoEntidad.CTA -> item.copy(estadoCTA = nuevoEstado)
+                                                TipoEntidad.COMUNICACIONES -> item.copy(estadoComunicaciones = nuevoEstado)
+                                                TipoEntidad.SERVICIOS -> item.copy(estadoServiciosGenerales = nuevoEstado)
+                                                TipoEntidad.PORTERIA -> item.copy(estadoPorteria = nuevoEstado)
+                                            }
+                                            listaSolicitudes[index] = itemActualizado
+                                        }
+                                    },
+                                    onCerrarSesionClick = {
+                                        pantallaActual = "login"
+                                    }
+                                )
+                            }
+                        }
+
                         "detalle_solicitud" -> {
                             solicitudSeleccionada?.let { solicitud ->
                                 DetalleSolicitudScreen(
@@ -107,11 +145,11 @@ class MainActivity : ComponentActivity() {
                                     onVolverClick = {
                                         pantallaActual = "home_coordinador"
                                     },
-                                    onCambiarEstadoEntidad = { id, entidad, nuevoEstado ->
+                                    onCambiarEstadoEntidad = { id, entidadStr, nuevoEstado ->
                                         val index = listaSolicitudes.indexOfFirst { it.id == id }
                                         if (index != -1) {
                                             val item = listaSolicitudes[index]
-                                            val itemActualizado = when (entidad) {
+                                            val itemActualizado = when (entidadStr) {
                                                 "cta" -> item.copy(estadoCTA = nuevoEstado)
                                                 "comunicaciones" -> item.copy(estadoComunicaciones = nuevoEstado)
                                                 "servicios" -> item.copy(estadoServiciosGenerales = nuevoEstado)
@@ -124,14 +162,6 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
-                        }
-
-                        "espacios" -> {
-                            EspaciosScreen(
-                                onVolverClick = {
-                                    pantallaActual = "home_profesor"
-                                }
-                            )
                         }
 
                         "solicitud" -> {
