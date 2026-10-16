@@ -13,7 +13,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
+
+// Modelo de datos compartido para las solicitudes
+data class SolicitudActividad(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val nombreActividad: String = "",
+    val responsable: String = "",
+    val fechaTexto: String = "",
+    val horaTexto: String = "",
+    val lugar: String = "",
+    val descripcion: String = "",
+    val estadoGeneral: String = "Pendiente",
+    val estadoCTA: String = "Pendiente",
+    val estadoComunicaciones: String = "Pendiente",
+    val estadoServiciosGenerales: String = "Pendiente",
+    val estadoPorteria: String = "Pendiente",
+    val recursosSeleccionados: List<String> = emptyList()
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +56,7 @@ fun ProfesorHomeScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF002A5C) // AZUL INSTITUCIONAL
+                    containerColor = Color(0xFF002A5C)
                 )
             )
         }
@@ -49,10 +65,9 @@ fun ProfesorHomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color.White) // FONDO BLANCO
+                .background(Color.White)
                 .padding(16.dp)
         ) {
-            // Acciones rápidas en Azul y Amarillo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -60,7 +75,7 @@ fun ProfesorHomeScreen(
                 Button(
                     onClick = onNuevaSolicitudClick,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFC107), // BOTÓN AMARILLO
+                        containerColor = Color(0xFFFFC107),
                         contentColor = Color(0xFF002A5C)
                     ),
                     shape = RoundedCornerShape(8.dp),
@@ -111,9 +126,10 @@ fun ProfesorHomeScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    // Sintaxis correcta pasando la lista directamente
                     items(solicitudes) { solicitud ->
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)), // CUADRADOS/TARJETAS AMARILLO SUAVE
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
                             shape = RoundedCornerShape(8.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -136,7 +152,7 @@ fun ProfesorHomeScreen(
                                     )
 
                                     Surface(
-                                        color = Color(0xFFFFE082), // ETIQUETA AMARILLA DENSIDAD
+                                        color = Color(0xFFFFE082),
                                         shape = RoundedCornerShape(12.dp)
                                     ) {
                                         Text(
@@ -155,7 +171,7 @@ fun ProfesorHomeScreen(
                                 Spacer(modifier = Modifier.height(6.dp))
 
                                 Text(
-                                    text = "📅 Fecha: ${solicitud.fechaTexto} - ⏰ Hora: ${solicitud.horaTexto}",
+                                    text = "📅 Fecha: ${solicitud.fechaTexto}\n⏰ Hora: ${solicitud.horaTexto}",
                                     color = Color.DarkGray,
                                     fontSize = 13.sp
                                 )

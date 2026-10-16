@@ -9,7 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
+
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.*
 import cl.duoc.aplicacionmoviltherionslabs.ui.theme.AplicacionMovilTherionsLabsTheme
 
