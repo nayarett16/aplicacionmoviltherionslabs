@@ -1,6 +1,7 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +20,7 @@ import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 @Composable
 fun CoordinadorHomeScreen(
     solicitudes: List<SolicitudActividad> = emptyList(),
+    onSolicitudClick: (SolicitudActividad) -> Unit = {},
     onAprobarSolicitud: (String) -> Unit = {},
     onRechazarSolicitud: (String) -> Unit = {},
     onVerCalendarioClick: () -> Unit = {},
@@ -133,7 +135,9 @@ fun CoordinadorHomeScreen(
                             colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
                             shape = RoundedCornerShape(8.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSolicitudClick(solicitud) }
                         ) {
                             Column(
                                 modifier = Modifier
