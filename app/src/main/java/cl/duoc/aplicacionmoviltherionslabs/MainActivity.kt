@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -22,7 +21,7 @@ class MainActivity : ComponentActivity() {
             AplicacionMovilTherionsLabsTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFFF8F9FA) // Fondo blanco/gris ultra limpio
+                    color = Color(0xFFF8F9FA)
                 ) {
                     var pantallaActual by remember { mutableStateOf("login") }
                     var pantallaAnterior by remember { mutableStateOf("home_profesor") }
@@ -61,6 +60,31 @@ class MainActivity : ComponentActivity() {
 
                         "home_coordinador" -> {
                             CoordinadorHomeScreen(
+                                solicitudes = listaSolicitudes,
+                                onAprobarSolicitud = { id ->
+                                    val index = listaSolicitudes.indexOfFirst { it.id == id }
+                                    if (index != -1) {
+                                        val item = listaSolicitudes[index]
+                                        listaSolicitudes[index] = item.copy(
+                                            estadoComunicaciones = "Aprobado",
+                                            estadoServiciosGenerales = "Aprobado",
+                                            estadoCTA = "Aprobado",
+                                            estadoPorteria = "Aprobado"
+                                        )
+                                    }
+                                },
+                                onRechazarSolicitud = { id ->
+                                    val index = listaSolicitudes.indexOfFirst { it.id == id }
+                                    if (index != -1) {
+                                        val item = listaSolicitudes[index]
+                                        listaSolicitudes[index] = item.copy(
+                                            estadoComunicaciones = "Rechazado",
+                                            estadoServiciosGenerales = "Rechazado",
+                                            estadoCTA = "Rechazado",
+                                            estadoPorteria = "Rechazado"
+                                        )
+                                    }
+                                },
                                 onVerCalendarioClick = {
                                     pantallaAnterior = "home_coordinador"
                                     pantallaActual = "calendario"
