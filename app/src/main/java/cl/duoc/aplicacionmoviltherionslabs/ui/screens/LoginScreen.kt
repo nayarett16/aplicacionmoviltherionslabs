@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Warning
@@ -52,7 +54,6 @@ import cl.duoc.aplicacionmoviltherionslabs.ui.theme.DuocTextSecondary
 import cl.duoc.aplicacionmoviltherionslabs.ui.theme.DuocTextWhite
 import cl.duoc.aplicacionmoviltherionslabs.ui.viewmodel.LoginViewModel
 
-// Funciones auxiliares para guardar y leer correos guardados localmente
 private fun obtenerCorreosGuardados(context: Context): List<String> {
     val prefs = context.getSharedPreferences("login_prefs", Context.MODE_PRIVATE)
     val setCorreos = prefs.getStringSet("correos_frecuentes", emptySet()) ?: emptySet()
@@ -76,11 +77,9 @@ fun LoginScreen(
     val uiState by loginViewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Estado local para los correos recordados y el menú desplegable
     var isExpanded by remember { mutableStateOf(false) }
     val correosGuardados = remember { mutableStateListOf<String>() }
 
-    // Cargar la lista al iniciar la pantalla
     LaunchedEffect(Unit) {
         correosGuardados.clear()
         correosGuardados.addAll(obtenerCorreosGuardados(context))
@@ -90,7 +89,8 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DuocNavy)
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -98,28 +98,27 @@ fun LoginScreen(
             imageVector = Icons.Default.DateRange,
             contentDescription = "Logo Reserva",
             tint = DuocBlueAccent,
-            modifier = Modifier.size(64.dp)
+            modifier = Modifier.size(52.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Text(
             text = "Reserva de espacios",
             color = DuocTextWhite,
-            fontSize = 24.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
 
         Text(
             text = "THERIONLABS",
             color = DuocTextSecondary,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Medium
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // Campo con desplegable para recordar/sugerir correos
         ExposedDropdownMenuBox(
             expanded = isExpanded && correosGuardados.isNotEmpty(),
             onExpandedChange = { isExpanded = !isExpanded },
@@ -131,7 +130,7 @@ fun LoginScreen(
                     loginViewModel.onEmailChanged(it)
                     isExpanded = true
                 },
-                label = { Text("Correo corporativo", color = DuocTextSecondary) },
+                label = { Text("Correo corporativo (@duocuc.cl)", color = DuocTextSecondary) },
                 singleLine = true,
                 isError = uiState.emailError != null,
                 trailingIcon = {
@@ -152,7 +151,6 @@ fun LoginScreen(
                     .menuAnchor()
             )
 
-            // Menú con la lista de sugerencias
             val filtrados = correosGuardados.filter { it.contains(uiState.email, ignoreCase = true) }
             if (filtrados.isNotEmpty()) {
                 ExposedDropdownMenu(
@@ -184,7 +182,7 @@ fun LoginScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
             value = uiState.password,
@@ -217,13 +215,12 @@ fun LoginScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             onClick = {
                 loginViewModel.onLoginClicked()
                 if (uiState.isSuccess) {
-                    // Guarda el correo en SharedPreferences al iniciar sesión correctamente
                     guardarCorreo(context, uiState.email)
                     onLoginSuccess(uiState.email)
                 }
@@ -232,31 +229,34 @@ fun LoginScreen(
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .height(48.dp)
         ) {
             Text(text = "Ingresar", color = DuocNavy, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         Card(
             colors = CardDefaults.cardColors(containerColor = DuocSurfaceDark),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(14.dp)) {
                 Text(
-                    text = "Cuentas ficticias de prueba (clave demo1234)",
+                    text = "Cuentas de prueba (clave demo1234)",
                     color = DuocTextWhite,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("Consulta: consulta@therionlabs.test", color = DuocBlueAccent, fontSize = 12.sp)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("• Comunidad / Solicitante: comunidad@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("Relator: relator@therionlabs.test", color = DuocBlueAccent, fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text("Coordinador: coordinacion@therionlabs.test", color = DuocBlueAccent, fontSize = 12.sp)
+                Text("Áreas Aprobadoras:", color = DuocTextWhite, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                Text("1. CTA/Digitales: cta@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
+                Text("2. Comunicaciones: comunicaciones@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
+                Text("3. Serv. Generales: servicios@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
+                Text("4. Portería: porteria@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
+                Text("5. Extensión: extension@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
             }
         }
     }

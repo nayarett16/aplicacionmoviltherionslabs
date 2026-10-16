@@ -1,6 +1,5 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.viewmodel
 
-import android.provider.ContactsContract
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,54 +14,69 @@ data class LoginUiState(
     val passwordError: String? = null,
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false
-
-
 )
 
 class LoginViewModel : ViewModel() {
-    private val  _uiState = MutableStateFlow(LoginUiState())
+
+    private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    fun onEmailChanged(email: String){
-        _uiState.update { it.copy(email = email, emailError =null) }
+    // Cuentas de prueba oficiales
+    private val cuentasPrueba = setOf(
+        "comunidad@duocuc.cl",
+        "cta@duocuc.cl",
+        "comunicaciones@duocuc.cl",
+        "servicios@duocuc.cl",
+        "porteria@duocuc.cl",
+        "extension@duocuc.cl"
+    )
+
+    fun onEmailChanged(email: String) {
+        _uiState.update { it.copy(email = email, emailError = null) }
     }
 
-    fun onPasswordChanged(password: String){
+    fun onPasswordChanged(password: String) {
         _uiState.update { it.copy(password = password, passwordError = null) }
     }
 
-    fun  togglePasswordVisibility(){
+    fun togglePasswordVisibility() {
         _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
     }
 
-    fun onLoginClicked(){
-        val currentEmail = _uiState.value.email
+    fun onLoginClicked() {
+        val currentEmail = _uiState.value.email.trim().lowercase()
         val currentPassword = _uiState.value.password
 
         var hasError = false
         var emailErr: String? = null
         var passErr: String? = null
 
-        if (currentEmail.isBlank()){
+        if (currentEmail.isBlank()) {
             emailErr = "El correo es obligatorio"
             hasError = true
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(currentEmail).matches()){
-            emailErr = "Ingrese un correo corporativo valido"
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(currentEmail).matches()) {
+            emailErr = "Ingrese un correo válido"
+            hasError = true
+        } else if (!currentEmail.endsWith("@duocuc.cl") && !currentEmail.endsWith("@duoc.cl")) {
+            emailErr = "Debe usar un correo institucional @duocuc.cl"
+            hasError = true
+        } else if (!cuentasPrueba.contains(currentEmail) && !currentEmail.contains("profesor")) {
+            emailErr = "Cuenta no registrada en el sistema de reservas"
             hasError = true
         }
 
-        if (currentPassword.isBlank()){
+        if (currentPassword.isBlank()) {
             passErr = "La contraseña es obligatoria"
             hasError = true
-        } else if (currentPassword.length < 6){
+        } else if (currentPassword.length < 6) {
             passErr = "Debe tener al menos 6 caracteres"
             hasError = true
         }
 
-        if (hasError){
-            _uiState.update { it.copy(emailError = emailErr, passwordError = passErr) }
-        } else{
-            _uiState.update { it.copy(isLoading = true, isSuccess = true) }
+        if (hasError) {
+            _uiState.update { it.copy(emailError = emailErr, passwordError = passErr, isSuccess = false) }
+        } else {
+            _uiState.update { it.copy(isLoading = false, isSuccess = true) }
         }
     }
 }
