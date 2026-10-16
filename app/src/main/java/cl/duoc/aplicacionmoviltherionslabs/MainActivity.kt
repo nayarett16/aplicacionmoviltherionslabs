@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     var pantallaActual by remember { mutableStateOf("login") }
                     var pantallaAnterior by remember { mutableStateOf("home_profesor") }
+                    var solicitudSeleccionada by remember { mutableStateOf<SolicitudActividad?>(null) }
 
                     val listaSolicitudes = remember { mutableStateListOf<SolicitudActividad>() }
 
@@ -61,6 +62,10 @@ class MainActivity : ComponentActivity() {
                         "home_coordinador" -> {
                             CoordinadorHomeScreen(
                                 solicitudes = listaSolicitudes,
+                                onSolicitudClick = { solicitud ->
+                                    solicitudSeleccionada = solicitud
+                                    pantallaActual = "detalle_solicitud"
+                                },
                                 onAprobarSolicitud = { id ->
                                     val index = listaSolicitudes.indexOfFirst { it.id == id }
                                     if (index != -1) {
@@ -93,6 +98,32 @@ class MainActivity : ComponentActivity() {
                                     pantallaActual = "login"
                                 }
                             )
+                        }
+
+                        "detalle_solicitud" -> {
+                            solicitudSeleccionada?.let { solicitud ->
+                                DetalleSolicitudScreen(
+                                    solicitud = solicitud,
+                                    onVolverClick = {
+                                        pantallaActual = "home_coordinador"
+                                    },
+                                    onCambiarEstadoEntidad = { id, entidad, nuevoEstado ->
+                                        val index = listaSolicitudes.indexOfFirst { it.id == id }
+                                        if (index != -1) {
+                                            val item = listaSolicitudes[index]
+                                            val itemActualizado = when (entidad) {
+                                                "cta" -> item.copy(estadoCTA = nuevoEstado)
+                                                "comunicaciones" -> item.copy(estadoComunicaciones = nuevoEstado)
+                                                "servicios" -> item.copy(estadoServiciosGenerales = nuevoEstado)
+                                                "porteria" -> item.copy(estadoPorteria = nuevoEstado)
+                                                else -> item
+                                            }
+                                            listaSolicitudes[index] = itemActualizado
+                                            solicitudSeleccionada = itemActualizado
+                                        }
+                                    }
+                                )
+                            }
                         }
 
                         "espacios" -> {
