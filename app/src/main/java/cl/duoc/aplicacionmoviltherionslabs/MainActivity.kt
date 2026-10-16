@@ -7,16 +7,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import cl.duoc.aplicacionmoviltherionslabs.ui.screens.CoordinadorHomeScreen
-import cl.duoc.aplicacionmoviltherionslabs.ui.screens.EspaciosScreen
-import cl.duoc.aplicacionmoviltherionslabs.ui.screens.LoginScreen
-import cl.duoc.aplicacionmoviltherionslabs.ui.screens.NuevaSolicitudScreen
-import cl.duoc.aplicacionmoviltherionslabs.ui.screens.ProfesorHomeScreen
+import androidx.compose.ui.graphics.Color
+import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
+import cl.duoc.aplicacionmoviltherionslabs.ui.screens.*
 import cl.duoc.aplicacionmoviltherionslabs.ui.theme.AplicacionMovilTherionsLabsTheme
 
 class MainActivity : ComponentActivity() {
@@ -27,15 +22,17 @@ class MainActivity : ComponentActivity() {
             AplicacionMovilTherionsLabsTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = Color(0xFFF8F9FA) // Fondo blanco/gris ultra limpio
                 ) {
                     var pantallaActual by remember { mutableStateOf("login") }
+                    var pantallaAnterior by remember { mutableStateOf("home_profesor") }
+
+                    val listaSolicitudes = remember { mutableStateListOf<SolicitudActividad>() }
 
                     when (pantallaActual) {
                         "login" -> {
                             LoginScreen(
                                 onLoginSuccess = { correo ->
-                                    // Evalúa el correo ingresado
                                     if (correo.contains("coordinacion", ignoreCase = true) ||
                                         correo.contains("coordinador", ignoreCase = true)) {
                                         pantallaActual = "home_coordinador"
@@ -45,26 +42,35 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+
                         "home_profesor" -> {
                             ProfesorHomeScreen(
-                                onBuscarSalasClick = {
-                                    pantallaActual = "espacios"
-                                },
+                                solicitudes = listaSolicitudes,
                                 onNuevaSolicitudClick = {
                                     pantallaActual = "solicitud"
                                 },
+                                onVerCalendarioClick = {
+                                    pantallaAnterior = "home_profesor"
+                                    pantallaActual = "calendario"
+                                },
                                 onCerrarSesionClick = {
                                     pantallaActual = "login"
                                 }
                             )
                         }
+
                         "home_coordinador" -> {
                             CoordinadorHomeScreen(
+                                onVerCalendarioClick = {
+                                    pantallaAnterior = "home_coordinador"
+                                    pantallaActual = "calendario"
+                                },
                                 onCerrarSesionClick = {
                                     pantallaActual = "login"
                                 }
                             )
                         }
+
                         "espacios" -> {
                             EspaciosScreen(
                                 onVolverClick = {
@@ -72,13 +78,28 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+
                         "solicitud" -> {
                             NuevaSolicitudScreen(
                                 onVolverClick = {
                                     pantallaActual = "home_profesor"
                                 },
-                                onSolicitudEnviada = {
+                                onVerCalendarioClick = {
+                                    pantallaAnterior = "solicitud"
+                                    pantallaActual = "calendario"
+                                },
+                                onSolicitudCreada = { nuevaSolicitud ->
+                                    listaSolicitudes.add(nuevaSolicitud)
                                     pantallaActual = "home_profesor"
+                                }
+                            )
+                        }
+
+                        "calendario" -> {
+                            CalendarioScreen(
+                                solicitudes = listaSolicitudes,
+                                onVolverClick = {
+                                    pantallaActual = pantallaAnterior
                                 }
                             )
                         }

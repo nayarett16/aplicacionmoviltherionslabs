@@ -1,14 +1,10 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,209 +13,174 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-// Imports corregidos a TU paquete exacto
-import cl.duoc.aplicacionmoviltherionslabs.model.EstadoReserva
-import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudReserva
-import cl.duoc.aplicacionmoviltherionslabs.ui.theme.*
+import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfesorHomeScreen(
+    solicitudes: List<SolicitudActividad> = emptyList(),
     onBuscarSalasClick: () -> Unit = {},
     onNuevaSolicitudClick: () -> Unit = {},
+    onVerCalendarioClick: () -> Unit = {},
     onCerrarSesionClick: () -> Unit = {}
 ) {
-    val misReservas = remember {
-        listOf(
-            SolicitudReserva("1", "LC25", "Prof. R. Morales", "Desarrollo Mobile", "2026-10-15", "08:30", "10:00", EstadoReserva.APROBADA),
-            SolicitudReserva("2", "AUD01", "Prof. R. Morales", "Taller de Integración", "2026-10-18", "11:00", "12:30", EstadoReserva.PENDIENTE)
-        )
-    }
-
     Scaffold(
         topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(AzulDuoc)
-                    .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 20.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "¡HOLA, DOCENTE!",
-                            color = AmarilloDuoc,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Panel de profesor",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Portal Docente",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                },
+                actions = {
+                    TextButton(onClick = onCerrarSesionClick) {
+                        Text("Cerrar Sesión", color = Color.White, fontWeight = FontWeight.Bold)
                     }
-
-                    IconButton(onClick = onCerrarSesionClick) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Cerrar Sesión",
-                            tint = Color.White
-                        )
-                    }
-                }
-            }
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onNuevaSolicitudClick,
-                containerColor = AzulDuoc,
-                contentColor = Color.White,
-                icon = { Icon(Icons.Default.Add, contentDescription = "Nueva Solicitud") },
-                text = { Text("Solicitar Sala", fontWeight = FontWeight.Bold) }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF002A5C) // AZUL INSTITUCIONAL
+                )
             )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(GrisFondoDuoc)
                 .padding(paddingValues)
+                .background(Color.White) // FONDO BLANCO
                 .padding(16.dp)
         ) {
-            Text(
-                text = "ACCIONES RÁPIDAS",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = AzulDuoc
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
+            // Acciones rápidas en Azul y Amarillo
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                AccionCard(
-                    titulo = "Ver Disponibilidad",
-                    subtitulo = "Explorar salas disponibles",
-                    modifier = Modifier.weight(1f),
-                    onClick = onBuscarSalasClick
-                )
+                Button(
+                    onClick = onNuevaSolicitudClick,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFC107), // BOTÓN AMARILLO
+                        contentColor = Color(0xFF002A5C)
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text("➕ Nueva Solicitud", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
 
-                AccionCard(
-                    titulo = "Mis Horarios",
-                    subtitulo = "Clases de la semana",
-                    modifier = Modifier.weight(1f),
-                    onClick = { /* Próximamente */ }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "MIS RESERVAS RECIENTES",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = AzulDuoc
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(misReservas) { reserva ->
-                    MiReservaCard(solicitud = reserva)
+                OutlinedButton(
+                    onClick = onVerCalendarioClick,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF002A5C)),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp)
+                ) {
+                    Text("📅 Ver Agenda", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
             }
-        }
-    }
-}
 
-@Composable
-fun AccionCard(
-    titulo: String,
-    subtitulo: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+            Spacer(modifier = Modifier.height(20.dp))
+
             Text(
-                text = titulo,
-                fontSize = 14.sp,
+                text = "Mis Solicitudes Enviadas",
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = AzulDuoc
+                color = Color(0xFF002A5C),
+                modifier = Modifier.padding(bottom = 12.dp)
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = subtitulo,
-                fontSize = 11.sp,
-                color = TextoGrisDuoc
-            )
-        }
-    }
-}
 
-@Composable
-fun MiReservaCard(solicitud: SolicitudReserva) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Sala ${solicitud.salaCodigo} - ${solicitud.asignatura}",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = Color.Black
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "${solicitud.fecha} | ${solicitud.horaInicio} - ${solicitud.horaFin}",
-                    fontSize = 12.sp,
-                    color = TextoGrisDuoc
-                )
-            }
+            if (solicitudes.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Aún no has creado ninguna solicitud.",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(solicitudes) { solicitud ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)), // CUADRADOS/TARJETAS AMARILLO SUAVE
+                            shape = RoundedCornerShape(8.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = solicitud.nombreActividad,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp,
+                                        color = Color(0xFF002A5C)
+                                    )
 
-            val (colorFondo, colorTexto, texto) = when (solicitud.estado) {
-                EstadoReserva.PENDIENTE -> Triple(Color(0xFFFFF8E1), Color(0xFFF57F17), "Pendiente")
-                EstadoReserva.APROBADA -> Triple(FondoDisponible, DisponibleVerde, "Aprobada")
-                EstadoReserva.RECHAZADA -> Triple(FondoReservado, DuocErrorRed, "Rechazada")
-            }
+                                    Surface(
+                                        color = Color(0xFFFFE082), // ETIQUETA AMARILLA DENSIDAD
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(
+                                            text = solicitud.estadoGeneral,
+                                            color = Color(0xFF5D4037),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            modifier = Modifier.padding(
+                                                horizontal = 8.dp,
+                                                vertical = 4.dp
+                                            )
+                                        )
+                                    }
+                                }
 
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = colorFondo
-            ) {
-                Text(
-                    text = texto,
-                    color = colorTexto,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Text(
+                                    text = "📅 Fecha: ${solicitud.fechaTexto} - ⏰ Hora: ${solicitud.horaTexto}",
+                                    color = Color.DarkGray,
+                                    fontSize = 13.sp
+                                )
+
+                                if (solicitud.recursosSeleccionados.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Recursos Pedidos:",
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 12.sp,
+                                        color = Color(0xFF002A5C)
+                                    )
+                                    solicitud.recursosSeleccionados.forEach { recurso ->
+                                        Text(
+                                            text = "• $recurso",
+                                            fontSize = 12.sp,
+                                            color = Color.DarkGray,
+                                            modifier = Modifier.padding(start = 6.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
