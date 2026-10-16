@@ -1,30 +1,15 @@
 package cl.duoc.aplicacionmoviltherionslabs.model
 
-data class Recurso(
+/**
+ * Modelo que representa un recurso/insumo administrado por las 5 áreas operativas.
+ * Solicitables por toda la comunidad (Alumnos, Docentes, Colaboradores).
+ */
+data class RecursoModel(
     val id: String,
     val nombre: String,
-    val area: String,
-    var seleccionado: Boolean = false
+    val area: String, // CTA, COM, SERVICIOS, PORTERIA, EXTENSION
+    val stockTotal: Int,
+    val stockDisponible: Int,
+    val unidadMedida: String = "unidades",
+    val estaDisponible: Boolean = stockDisponible > 0
 )
-
-data class SolicitudActividad(
-    val id: String,
-    val nombreActividad: String,
-    val responsable: String,
-    val escuelaArea: String = "",
-    val fechaTexto: String = "",
-    val horaTexto: String = "",
-    val recursosSeleccionados: List<String> = emptyList(),
-    var estadoComunicaciones: String = "Pendiente",
-    var estadoServiciosGenerales: String = "Pendiente",
-    var estadoCTA: String = "Pendiente",
-    var estadoPorteria: String = "Pendiente",
-    var estadoExtension: String = "Pendiente"
-) {
-    val estadoGeneral: String
-        get() = if (estadoComunicaciones == "Aprobado" &&
-            estadoServiciosGenerales == "Aprobado" &&
-            estadoCTA == "Aprobado" &&
-            estadoPorteria == "Aprobado"
-        ) "Aprobado" else "Pendiente"
-}
