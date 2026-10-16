@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-// Modelo de estado de la pantalla de Login
 data class LoginUiState(
     val email: String = "",
     val password: String = "",
@@ -22,8 +21,9 @@ class LoginViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    // Cuentas de prueba oficiales con dominio institucional
+    // Cuentas de prueba oficiales
     private val cuentasPrueba = setOf(
+        "comunidad@duocuc.cl",
         "cta@duocuc.cl",
         "comunicaciones@duocuc.cl",
         "servicios@duocuc.cl",

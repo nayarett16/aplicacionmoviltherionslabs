@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Warning
@@ -87,7 +89,8 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DuocNavy)
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -95,10 +98,10 @@ fun LoginScreen(
             imageVector = Icons.Default.DateRange,
             contentDescription = "Logo Reserva",
             tint = DuocBlueAccent,
-            modifier = Modifier.size(56.dp)
+            modifier = Modifier.size(52.dp)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Text(
             text = "Reserva de espacios",
@@ -114,7 +117,7 @@ fun LoginScreen(
             fontWeight = FontWeight.Medium
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         ExposedDropdownMenuBox(
             expanded = isExpanded && correosGuardados.isNotEmpty(),
@@ -231,7 +234,7 @@ fun LoginScreen(
             Text(text = "Ingresar", color = DuocNavy, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         Card(
             colors = CardDefaults.cardColors(containerColor = DuocSurfaceDark),
@@ -246,6 +249,9 @@ fun LoginScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(6.dp))
+                Text("• Comunidad / Solicitante: comunidad@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Áreas Aprobadoras:", color = DuocTextWhite, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                 Text("1. CTA/Digitales: cta@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
                 Text("2. Comunicaciones: comunicaciones@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
                 Text("3. Serv. Generales: servicios@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
