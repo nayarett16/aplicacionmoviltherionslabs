@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 
-
 enum class TipoEntidad(val nombreArea: String, val palabrasClave: List<String>) {
     CTA("CTA / Digitales", listOf("Micrófono", "Proyector")),
     COMUNICACIONES("Comunicaciones", listOf("Fotográfica", "Cobertura")),
@@ -24,12 +23,12 @@ enum class TipoEntidad(val nombreArea: String, val palabrasClave: List<String>) 
 
     companion object {
         fun desdeCorreo(correo: String): TipoEntidad? {
-            val c = correo.lowercase()
+            val c = correo.lowercase().trim()
             return when {
-                c.contains("cta") || c.contains("digitales") -> CTA
-                c.contains("comunicaciones") -> COMUNICACIONES
-                c.contains("servicios") || c.contains("aseo") -> SERVICIOS
-                c.contains("porteria") -> PORTERIA
+                c.contains("cta") -> CTA
+                c.contains("comunicaciones") || c.contains("comunicacion") -> COMUNICACIONES
+                c.contains("servicios") || c.contains("mantencion") -> SERVICIOS
+                c.contains("porteria") || c.contains("seguridad") -> PORTERIA
                 else -> null
             }
         }
@@ -40,9 +39,9 @@ enum class TipoEntidad(val nombreArea: String, val palabrasClave: List<String>) 
 @Composable
 fun EntidadHomeScreen(
     entidad: TipoEntidad,
-    solicitudes: List<SolicitudActividad>,
-    onCambiarEstado: (solicitudId: String, nuevoEstado: String) -> Unit,
-    onCerrarSesionClick: () -> Unit
+    solicitudes: List<SolicitudActividad> = emptyList(),
+    onCambiarEstado: (solicitudId: String, nuevoEstado: String) -> Unit = { _, _ -> },
+    onCerrarSesionClick: () -> Unit = {}
 ) {
     // Filtrar solo las solicitudes que requieren recursos de esta área específica
     val solicitudesFiltradas = solicitudes.filter { solicitud ->
@@ -58,15 +57,22 @@ fun EntidadHomeScreen(
                     Text(
                         text = "Panel ${entidad.nombreArea}",
                         fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
                         color = Color.White
                     )
                 },
                 actions = {
                     TextButton(onClick = onCerrarSesionClick) {
-                        Text("Cerrar Sesión", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Cerrar Sesión",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF002A5C))
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF002A5C)
+                )
             )
         }
     ) { paddingValues ->
@@ -74,11 +80,11 @@ fun EntidadHomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color.White)
+                .background(Color(0xFFF8F9FA))
                 .padding(16.dp)
         ) {
             Text(
-                text = "📦 Recursos Requeridos para ${entidad.nombreArea}",
+                text = "Solicitudes Asignadas a Tu Área",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF002A5C)
@@ -86,29 +92,25 @@ fun EntidadHomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (solicitudesFiltradas.isEmpty()) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth()
+            if (solicitudes.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No hay solicitudes pendientes para su área.",
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
-                    }
+                    Text(
+                        text = "No hay solicitudes pendientes para gestionar.",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(solicitudesFiltradas) { solicitud ->
+                    items(solicitudes, key = { it.id }) { solicitud ->
                         val estadoActual = when (entidad) {
                             TipoEntidad.CTA -> solicitud.estadoCTA
                             TipoEntidad.COMUNICACIONES -> solicitud.estadoComunicaciones
@@ -117,12 +119,12 @@ fun EntidadHomeScreen(
                         }
 
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
                             shape = RoundedCornerShape(8.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
+                            Column(modifier = Modifier.padding(14.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -131,7 +133,7 @@ fun EntidadHomeScreen(
                                     Text(
                                         text = solicitud.nombreActividad,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp,
+                                        fontSize = 15.sp,
                                         color = Color(0xFF002A5C)
                                     )
 
@@ -139,40 +141,48 @@ fun EntidadHomeScreen(
                                         color = when (estadoActual) {
                                             "Aprobado" -> Color(0xFFE8F5E9)
                                             "Rechazado" -> Color(0xFFFFEBEE)
-                                            else -> Color(0xFFFFE082)
+                                            else -> Color(0xFFFFF8E1)
                                         },
-                                        shape = RoundedCornerShape(8.dp)
+                                        shape = RoundedCornerShape(6.dp)
                                     ) {
                                         Text(
-                                            text = estadoActual,
+                                            text = estadoActual.uppercase(),
                                             color = when (estadoActual) {
                                                 "Aprobado" -> Color(0xFF2E7D32)
                                                 "Rechazado" -> Color(0xFFC62828)
-                                                else -> Color(0xFF5D4037)
+                                                else -> Color(0xFFF57F17)
                                             },
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 11.sp,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            fontSize = 10.sp,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                         )
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(text = "📅 Fecha: ${solicitud.fechaTexto} - ⏰ Hora: ${solicitud.horaTexto}", fontSize = 12.sp, color = Color.DarkGray)
-                                Text(text = "👤 Solicitante: ${solicitud.responsable}", fontSize = 12.sp, color = Color.DarkGray)
+                                Spacer(modifier = Modifier.height(6.dp))
 
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(text = "Recursos Solicitados a su Área:", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF002A5C))
+                                Text(
+                                    text = "👤 Responsable: ${solicitud.responsable} (${solicitud.escuelaArea})",
+                                    fontSize = 12.sp,
+                                    color = Color.DarkGray
+                                )
 
-                                val recursosArea = solicitud.recursosSeleccionados.filter { recurso ->
-                                    entidad.palabrasClave.any { palabra -> recurso.contains(palabra, ignoreCase = true) }
+                                Text(
+                                    text = "📅 Fecha: ${solicitud.fechaTexto} | ⏰ Hora: ${solicitud.horaTexto}",
+                                    fontSize = 12.sp,
+                                    color = Color.DarkGray
+                                )
+
+                                if (solicitud.recursosSeleccionados.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Recursos: ${solicitud.recursosSeleccionados.joinToString(", ")}",
+                                        fontSize = 11.sp,
+                                        color = Color.Gray
+                                    )
                                 }
 
-                                recursosArea.forEach { rec ->
-                                    Text(text = "• $rec", fontSize = 12.sp, color = Color.DarkGray, modifier = Modifier.padding(start = 6.dp))
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(10.dp))
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -184,7 +194,7 @@ fun EntidadHomeScreen(
                                         shape = RoundedCornerShape(6.dp),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("✓ Aprobar Stock", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        Text("Aprobar", fontSize = 12.sp)
                                     }
 
                                     Button(
@@ -193,7 +203,7 @@ fun EntidadHomeScreen(
                                         shape = RoundedCornerShape(6.dp),
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Text("✗ Sin Stock", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        Text("Rechazar", fontSize = 12.sp)
                                     }
                                 }
                             }

@@ -326,12 +326,12 @@ fun NuevaSolicitudScreen(
             onConfirmar = {
                 mostrarConfirmacion = false
 
-                // 1. RECURSO NATIVO: Vibración física de hardware (500ms)
+                // 1. RECURSO NATIVO: Vibración física del hardware
                 val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                     vibrator.vibrate(
                         android.os.VibrationEffect.createOneShot(
-                            500, // Duración en milisegundos
+                            500,
                             android.os.VibrationEffect.DEFAULT_AMPLITUDE
                         )
                     )
