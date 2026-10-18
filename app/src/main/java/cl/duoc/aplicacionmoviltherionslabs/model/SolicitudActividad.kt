@@ -1,6 +1,6 @@
 package cl.duoc.aplicacionmoviltherionslabs.model
 
-data class SolicitudActividad(
+public data class SolicitudActividad(
     val id: String = java.util.UUID.randomUUID().toString(),
     val nombreActividad: String = "",
     val responsable: String = "",

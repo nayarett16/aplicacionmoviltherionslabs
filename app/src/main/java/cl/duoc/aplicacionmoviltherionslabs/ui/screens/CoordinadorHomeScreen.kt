@@ -187,7 +187,7 @@ fun CoordinadorHomeScreen(
                                 )
 
                                 Text(
-                                    text = "📅 Fecha: ${solicitud.fechaTexto} - ⏰ Hora: ${solicitud.horaTexto}",
+                                    text = "📅 Fecha: ${solicitud.fechaTexto} | ⏰ Hora: ${solicitud.horaTexto}",
                                     fontSize = 13.sp,
                                     color = Color.DarkGray,
                                     fontWeight = FontWeight.SemiBold

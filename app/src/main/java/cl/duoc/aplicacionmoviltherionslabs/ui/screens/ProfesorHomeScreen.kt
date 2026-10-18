@@ -1,5 +1,7 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,41 +15,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-// Modelo de datos compartido para las solicitudes
-data class SolicitudActividad(
-    val id: String = java.util.UUID.randomUUID().toString(),
-    val nombreActividad: String = "",
-    val responsable: String = "",
-    val fechaTexto: String = "",
-    val horaTexto: String = "",
-    val lugar: String = "",
-    val descripcion: String = "",
-    val estadoGeneral: String = "Pendiente",
-    val estadoCTA: String = "Pendiente",
-    val estadoComunicaciones: String = "Pendiente",
-    val estadoServiciosGenerales: String = "Pendiente",
-    val estadoPorteria: String = "Pendiente",
-    val recursosSeleccionados: List<String> = emptyList()
-)
+import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfesorHomeScreen(
-    solicitudes: List<SolicitudActividad> = emptyList(),
-    onBuscarSalasClick: () -> Unit = {},
-    onNuevaSolicitudClick: () -> Unit = {},
-    onVerCalendarioClick: () -> Unit = {},
-    onCerrarSesionClick: () -> Unit = {}
+    solicitudes: List<SolicitudActividad>,
+    onNuevaSolicitudClick: () -> Unit,
+    onVerCalendarioClick: () -> Unit,
+    onCerrarSesionClick: () -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Portal Docente",
+                        text = "Panel Docente",
+                        color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontSize = 18.sp
                     )
                 },
                 actions = {
@@ -55,9 +41,7 @@ fun ProfesorHomeScreen(
                         Text("Cerrar Sesión", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF002A5C)
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF002A5C))
             )
         }
     ) { paddingValues ->
@@ -65,80 +49,106 @@ fun ProfesorHomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color.White)
+                .background(Color(0xFFF8F9FA))
                 .padding(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // Tarjeta de Cabecera: Información Docente + Acceso a la Agenda General
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Button(
-                    onClick = onNuevaSolicitudClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFC107),
-                        contentColor = Color(0xFF002A5C)
-                    ),
-                    shape = RoundedCornerShape(8.dp),
+                Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
+                        .fillMaxWidth()
+                        .padding(14.dp)
                 ) {
-                    Text("➕ Nueva Solicitud", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                }
+                    Text(
+                        text = "Docente / Comunidad",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = Color(0xFF002A5C)
+                    )
+                    Text(
+                        text = "Sede Duoc UC",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
 
-                OutlinedButton(
-                    onClick = onVerCalendarioClick,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF002A5C)),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                ) {
-                    Text("📅 Ver Agenda", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedButton(
+                        onClick = onVerCalendarioClick,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "📅 Ver Agenda e Historial de Sede",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF002A5C)
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onNuevaSolicitudClick,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107), contentColor = Color(0xFF002A5C)),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Text("➕ Crear Nueva Solicitud de Evento", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Mis Solicitudes Enviadas",
-                style = MaterialTheme.typography.titleLarge,
+                text = "Mis Solicitudes Realizadas",
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF002A5C),
-                modifier = Modifier.padding(bottom = 12.dp)
+                color = Color(0xFF002A5C)
             )
 
-            if (solicitudes.isEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            AnimatedVisibility(
+                visible = solicitudes.isEmpty(),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Aún no has creado ninguna solicitud.",
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
+                    Text("Aún no has registrado ninguna solicitud.", color = Color.Gray, fontSize = 14.sp)
                 }
-            } else {
+            }
+
+            AnimatedVisibility(
+                visible = solicitudes.isNotEmpty(),
+                enter = fadeIn(animationSpec = tween(500)) + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // Sintaxis correcta pasando la lista directamente
-                    items(solicitudes) { solicitud ->
+                    items(solicitudes, key = { it.id }) { solicitud ->
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
                             shape = RoundedCornerShape(8.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                            ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -147,51 +157,52 @@ fun ProfesorHomeScreen(
                                     Text(
                                         text = solicitud.nombreActividad,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp,
+                                        fontSize = 15.sp,
                                         color = Color(0xFF002A5C)
                                     )
 
-                                    Surface(
-                                        color = Color(0xFFFFE082),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Text(
-                                            text = solicitud.estadoGeneral,
-                                            color = Color(0xFF5D4037),
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 12.sp,
-                                            modifier = Modifier.padding(
-                                                horizontal = 8.dp,
-                                                vertical = 4.dp
+                                    AnimatedContent(
+                                        targetState = solicitud.estadoGeneral,
+                                        label = "EstadoAnimation"
+                                    ) { estado ->
+                                        Surface(
+                                            color = when (estado) {
+                                                "Aprobado" -> Color(0xFFE8F5E9)
+                                                "Rechazado" -> Color(0xFFFFEBEE)
+                                                else -> Color(0xFFFFF8E1)
+                                            },
+                                            shape = RoundedCornerShape(6.dp)
+                                        ) {
+                                            Text(
+                                                text = estado.uppercase(),
+                                                color = when (estado) {
+                                                    "Aprobado" -> Color(0xFF2E7D32)
+                                                    "Rechazado" -> Color(0xFFC62828)
+                                                    else -> Color(0xFFF57F17)
+                                                },
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 10.sp,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                             )
-                                        )
+                                        }
                                     }
                                 }
 
                                 Spacer(modifier = Modifier.height(6.dp))
 
                                 Text(
-                                    text = "📅 Fecha: ${solicitud.fechaTexto}\n⏰ Hora: ${solicitud.horaTexto}",
-                                    color = Color.DarkGray,
-                                    fontSize = 13.sp
+                                    text = "📅 ${solicitud.fechaTexto}  |  ⏰ ${solicitud.horaTexto}",
+                                    fontSize = 12.sp,
+                                    color = Color.DarkGray
                                 )
 
                                 if (solicitud.recursosSeleccionados.isNotEmpty()) {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "Recursos Pedidos:",
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 12.sp,
-                                        color = Color(0xFF002A5C)
+                                        text = "Recursos: ${solicitud.recursosSeleccionados.joinToString(", ")}",
+                                        fontSize = 11.sp,
+                                        color = Color.Gray
                                     )
-                                    solicitud.recursosSeleccionados.forEach { recurso ->
-                                        Text(
-                                            text = "• $recurso",
-                                            fontSize = 12.sp,
-                                            color = Color.DarkGray,
-                                            modifier = Modifier.padding(start = 6.dp)
-                                        )
-                                    }
                                 }
                             }
                         }

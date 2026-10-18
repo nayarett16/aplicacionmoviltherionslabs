@@ -13,7 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cl.duoc.aplicacionmoviltherionslabs.model.Recurso
+import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioRecursos
+import cl.duoc.aplicacionmoviltherionslabs.model.RecursoModel
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.ConfirmacionDialog
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.SeleccionadorFechaDialog
@@ -23,6 +24,11 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+
+data class RecursoSeleccionable(
+    val recurso: RecursoModel,
+    var seleccionado: Boolean = false
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +51,6 @@ fun NuevaSolicitudScreen(
     var mostrarConfirmacion by remember { mutableStateOf(false) }
     var mensajeError by remember { mutableStateOf<String?>(null) }
 
-    // Feriados nacionales oficiales de Chile (formato dd/MM)
     val feriadosChile = remember {
         setOf(
             "01/01", "03/04", "04/04", "01/05", "21/05", "21/06",
@@ -56,13 +61,9 @@ fun NuevaSolicitudScreen(
 
     var recursosList by remember {
         mutableStateOf(
-            listOf(
-                Recurso("1", "Micrófono Inalámbrico", "Área: CTA / Digitales"),
-                Recurso("2", "Proyector Portátil", "Área: CTA / Digitales"),
-                Recurso("3", "Cobertura Fotográfica", "Área: Comunicaciones"),
-                Recurso("4", "Apoyo Aseo / Camarines", "Área: Servicios Generales"),
-                Recurso("5", "Acceso / Control Público", "Área: Portería")
-            )
+            RepositorioRecursos.obtenerTodosLosRecursos().map { recursoModel ->
+                RecursoSeleccionable(recurso = recursoModel)
+            }
         )
     }
 
@@ -71,7 +72,7 @@ fun NuevaSolicitudScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Solicitud de Evento",
+                        text = "Nueva Solicitud",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = Color.White
@@ -82,13 +83,8 @@ fun NuevaSolicitudScreen(
                         Text("← Volver", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
-                actions = {
-                    IconButton(onClick = onVerCalendarioClick) {
-                        Text("📅 Agenda", fontWeight = FontWeight.Bold, color = Color.White)
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF002A5C) // GUINCHA AZUL
+                    containerColor = Color(0xFF002A5C)
                 )
             )
         }
@@ -97,7 +93,7 @@ fun NuevaSolicitudScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color.White) // FONDO BLANCO
+                .background(Color.White)
                 .padding(16.dp)
         ) {
             OutlinedTextField(
@@ -130,12 +126,23 @@ fun NuevaSolicitudScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(
-                text = "⚠️ Mínimo 2 semanas de anticipación. Sin reservas domingos ni feriados.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(bottom = 6.dp)
-            )
+            // Sección de Agenda y Selección de Fecha/Hora
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Fecha y Horario Evento",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = Color(0xFF002A5C)
+                )
+
+                TextButton(onClick = onVerCalendarioClick) {
+                    Text("📅 Consultar Agenda", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF002A5C))
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -156,20 +163,23 @@ fun NuevaSolicitudScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Recursos Requeridos por Área:",
+                text = "Recursos Disponibles en Catálogo:",
                 fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 color = Color(0xFF002A5C)
             )
 
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Catálogo de Recursos en Lista Desplazable
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(recursosList) { recurso ->
+                items(recursosList) { item ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
                         shape = RoundedCornerShape(8.dp),
@@ -178,29 +188,29 @@ fun NuevaSolicitudScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
+                                .padding(10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = recurso.nombre,
+                                    text = item.recurso.nombre,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
+                                    fontSize = 13.sp,
                                     color = Color(0xFF002A5C)
                                 )
                                 Text(
-                                    text = recurso.area,
+                                    text = "Área: ${item.recurso.area} | Disp: ${item.recurso.stockDisponible} ${item.recurso.unidadMedida}",
                                     color = Color.Gray,
-                                    fontSize = 12.sp
+                                    fontSize = 11.sp
                                 )
                             }
                             Checkbox(
-                                checked = recurso.seleccionado,
+                                checked = item.seleccionado,
                                 onCheckedChange = { checked ->
-                                    recursosList = recursosList.map { item ->
-                                        if (item.id == recurso.id) item.copy(seleccionado = checked)
-                                        else item
+                                    recursosList = recursosList.map { elem ->
+                                        if (elem.recurso.id == item.recurso.id) elem.copy(seleccionado = checked)
+                                        else elem
                                     }
                                 },
                                 colors = CheckboxDefaults.colors(checkedColor = Color(0xFF002A5C))
@@ -220,6 +230,8 @@ fun NuevaSolicitudScreen(
                 )
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             Button(
                 onClick = {
                     val recursosSeleccionados = recursosList.filter { it.seleccionado }
@@ -235,18 +247,18 @@ fun NuevaSolicitudScreen(
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFC107), // BOTÓN AMARILLO
+                    containerColor = Color(0xFFFFC107),
                     contentColor = Color(0xFF002A5C)
                 ),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(48.dp)
             ) {
                 Text(
-                    text = "Enviar Solicitud a Jefaturas",
+                    text = "Generar Comprobante de Solicitud",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    fontSize = 14.sp
                 )
             }
         }
@@ -256,13 +268,11 @@ fun NuevaSolicitudScreen(
         SeleccionadorFechaDialog(
             onFechaSeleccionada = { millis ->
                 millis?.let {
-                    // Configurar Calendario explícitamente en UTC para evitar el desfase de zona horaria
                     val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
                         timeInMillis = it
                     }
                     val diaSemana = cal.get(Calendar.DAY_OF_WEEK)
 
-                    // Formateadores configurados en UTC
                     val formatoDiaMes = SimpleDateFormat("dd/MM", Locale.getDefault()).apply {
                         timeZone = TimeZone.getTimeZone("UTC")
                     }.format(Date(it))
@@ -282,7 +292,7 @@ fun NuevaSolicitudScreen(
                     } else {
                         mensajeError = null
                         fechaMillis = it
-                        fechaTexto = formatoCompleto // Muestra exactamente la fecha seleccionada (ej: 30/10/2026)
+                        fechaTexto = formatoCompleto
                     }
                 }
             },
@@ -293,8 +303,31 @@ fun NuevaSolicitudScreen(
     if (mostrarTimePicker) {
         SeleccionadorHoraDialog(
             onHoraSeleccionada = { hora, minuto ->
-                horaTexto = String.format(Locale.getDefault(), "%02d:%02d", hora, minuto)
-                horaSeleccionada = true
+                val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                    fechaMillis?.let { timeInMillis = it }
+                }
+                val diaSemana = cal.get(Calendar.DAY_OF_WEEK)
+
+                val minutosTotales = hora * 60 + minuto
+
+                val esValido = when (diaSemana) {
+                    Calendar.SATURDAY -> minutosTotales in (8 * 60)..(14 * 60)
+                    else -> minutosTotales in (8 * 60)..(22 * 60 + 30)
+                }
+
+                if (!esValido) {
+                    if (diaSemana == Calendar.SATURDAY) {
+                        mensajeError = "❌ Los sábados solo se permiten reservas entre 08:00 y 14:00 hrs."
+                    } else {
+                        mensajeError = "❌ El horario permitido de lunes a viernes es de 08:00 a 22:30 hrs."
+                    }
+                    horaSeleccionada = false
+                    horaTexto = "Seleccionar Hora"
+                } else {
+                    mensajeError = null
+                    horaTexto = String.format(Locale.getDefault(), "%02d:%02d", hora, minuto)
+                    horaSeleccionada = true
+                }
             },
             onDismiss = { mostrarTimePicker = false }
         )
@@ -314,7 +347,7 @@ fun NuevaSolicitudScreen(
                     escuelaArea = escuelaArea,
                     fechaTexto = fechaTexto,
                     horaTexto = horaTexto,
-                    recursosSeleccionados = recursosList.filter { it.seleccionado }.map { it.nombre },
+                    recursosSeleccionados = recursosList.filter { it.seleccionado }.map { "${it.recurso.nombre} (${it.recurso.area})" },
                     estadoComunicaciones = "Pendiente",
                     estadoServiciosGenerales = "Pendiente",
                     estadoCTA = "Pendiente",
