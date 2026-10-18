@@ -29,6 +29,11 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+data class RecursoSeleccionable(
+    val recurso: RecursoModel,
+    var seleccionado: Boolean = false
+)
+@SuppressLint("MissingPermission")
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,14 +69,11 @@ fun NuevaSolicitudScreen(
         )
     }
 
-    // Lista de recursos
-    val recursosCatalogo = remember {
-        listOf(
-            RecursoModel("1", "Micrófono Inalámbrico", "Área: CTA / Digitales", 5, 5),
-            RecursoModel("2", "Proyector Portátil", "Área: CTA / Digitales", 3, 3),
-            RecursoModel("3", "Cobertura Fotográfica", "Área: Comunicaciones", 2, 2),
-            RecursoModel("4", "Apoyo Aseo / Camarines", "Área: Servicios Generales", 10, 10),
-            RecursoModel("5", "Acceso / Control Público", "Área: Portería", 4, 4)
+    var recursosList by remember {
+        mutableStateOf(
+            RepositorioRecursos.obtenerTodosLosRecursos().map { recursoModel ->
+                RecursoSeleccionable(recurso = recursoModel)
+            }
         )
     }
 
@@ -154,6 +156,22 @@ fun NuevaSolicitudScreen(
                 color = Color.DarkGray,
                 modifier = Modifier.padding(bottom = 6.dp)
             )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Fecha y Horario Evento",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = Color(0xFF002A5C)
+                )
+
+                TextButton(onClick = onVerCalendarioClick) {
+                    Text("📅 Consultar Agenda", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF002A5C))
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -174,21 +192,22 @@ fun NuevaSolicitudScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Recursos Requeridos por Área:",
+                text = "Recursos Disponibles en Catálogo:",
                 fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 color = Color(0xFF002A5C)
             )
+
+            Spacer(modifier = Modifier.height(6.dp))
 
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(recursosCatalogo) { recurso ->
-                    val estaSeleccionado = idsSeleccionados.contains(recurso.id)
+                items(recursosList) { item ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
                         shape = RoundedCornerShape(8.dp),
@@ -197,30 +216,29 @@ fun NuevaSolicitudScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
+                                .padding(10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = recurso.nombre,
+                                    text = item.recurso.nombre,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
+                                    fontSize = 13.sp,
                                     color = Color(0xFF002A5C)
                                 )
                                 Text(
-                                    text = recurso.area,
+                                    text = "Área: ${item.recurso.area} | Disp: ${item.recurso.stockDisponible} ${item.recurso.unidadMedida}",
                                     color = Color.Gray,
-                                    fontSize = 12.sp
+                                    fontSize = 11.sp
                                 )
                             }
                             Checkbox(
-                                checked = estaSeleccionado,
+                                checked = item.seleccionado,
                                 onCheckedChange = { checked ->
-                                    idsSeleccionados = if (checked) {
-                                        idsSeleccionados + recurso.id
-                                    } else {
-                                        idsSeleccionados - recurso.id
+                                    recursosList = recursosList.map { elem ->
+                                        if (elem.recurso.id == item.recurso.id) elem.copy(seleccionado = checked)
+                                        else elem
                                     }
                                 },
                                 colors = CheckboxDefaults.colors(checkedColor = Color(0xFF002A5C))
@@ -240,14 +258,17 @@ fun NuevaSolicitudScreen(
                 )
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             Button(
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    val recursosSeleccionados = recursosList.filter { it.seleccionado }
                     if (nombreActividad.isBlank() || responsable.isBlank() || escuelaArea.isBlank()) {
                         mensajeError = "Por favor completa todos los campos de texto."
                     } else if (fechaMillis == null || !horaSeleccionada) {
                         mensajeError = "Debes seleccionar fecha y hora para la actividad."
-                    } else if (idsSeleccionados.isEmpty()) {
+                    } else if (recursosSeleccionados.isEmpty()) {
                         mensajeError = "Debes seleccionar al menos un recurso."
                     } else {
                         mensajeError = null
@@ -261,12 +282,12 @@ fun NuevaSolicitudScreen(
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(48.dp)
             ) {
                 Text(
-                    text = "Enviar Solicitud a Jefaturas",
+                    text = "Generar Comprobante de Solicitud",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
+                    fontSize = 14.sp
                 )
             }
         }
@@ -311,8 +332,31 @@ fun NuevaSolicitudScreen(
     if (mostrarTimePicker) {
         SeleccionadorHoraDialog(
             onHoraSeleccionada = { hora, minuto ->
-                horaTexto = String.format(Locale.getDefault(), "%02d:%02d", hora, minuto)
-                horaSeleccionada = true
+                val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                    fechaMillis?.let { timeInMillis = it }
+                }
+                val diaSemana = cal.get(Calendar.DAY_OF_WEEK)
+
+                val minutosTotales = hora * 60 + minuto
+
+                val esValido = when (diaSemana) {
+                    Calendar.SATURDAY -> minutosTotales in (8 * 60)..(14 * 60)
+                    else -> minutosTotales in (8 * 60)..(22 * 60 + 30)
+                }
+
+                if (!esValido) {
+                    if (diaSemana == Calendar.SATURDAY) {
+                        mensajeError = "❌ Los sábados solo se permiten reservas entre 08:00 y 14:00 hrs."
+                    } else {
+                        mensajeError = "❌ El horario permitido de lunes a viernes es de 08:00 a 22:30 hrs."
+                    }
+                    horaSeleccionada = false
+                    horaTexto = "Seleccionar Hora"
+                } else {
+                    mensajeError = null
+                    horaTexto = String.format(Locale.getDefault(), "%02d:%02d", hora, minuto)
+                    horaSeleccionada = true
+                }
             },
             onDismiss = { mostrarTimePicker = false }
         )
@@ -325,31 +369,7 @@ fun NuevaSolicitudScreen(
             textoConfirmar = "Enviar",
             onConfirmar = {
                 mostrarConfirmacion = false
-
-                // 1. RECURSO NATIVO: Vibración física del hardware
-                val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    vibrator.vibrate(
-                        android.os.VibrationEffect.createOneShot(
-                            500,
-                            android.os.VibrationEffect.DEFAULT_AMPLITUDE
-                        )
-                    )
-                } else {
-                    @Suppress("DEPRECATION")
-                    vibrator.vibrate(500)
-                }
-
-                // 2. RECURSO NATIVO: Notificación Local del Sistema
-                NotificationHelper.mostrarNotificacionSolicitud(
-                    context = context,
-                    titulo = "¡Solicitud Enviada con Éxito! 🚀",
-                    mensaje = "Tu solicitud '$nombreActividad' ha sido registrada correctamente."
-                )
-
-                val nombresRecursosSeleccionados = recursosCatalogo
-                    .filter { idsSeleccionados.contains(it.id) }
-                    .map { it.nombre }
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
                 val nuevaSolicitud = SolicitudActividad(
                     id = System.currentTimeMillis().toString(),
@@ -358,7 +378,7 @@ fun NuevaSolicitudScreen(
                     escuelaArea = escuelaArea,
                     fechaTexto = fechaTexto,
                     horaTexto = horaTexto,
-                    recursosSeleccionados = nombresRecursosSeleccionados,
+                    recursosSeleccionados = recursosList.filter { it.seleccionado }.map { "${it.recurso.nombre} (${it.recurso.area})" },
                     estadoComunicaciones = "Pendiente",
                     estadoServiciosGenerales = "Pendiente",
                     estadoCTA = "Pendiente",

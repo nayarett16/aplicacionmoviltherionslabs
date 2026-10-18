@@ -40,6 +40,7 @@ class MainActivity : ComponentActivity() {
                     color = Color(0xFFF8F9FA)
                 ) {
                     val context = LocalContext.current
+                    val activity = context as? ComponentActivity
                     val prefsManager = remember { PreferenciasManager(context) }
 
                     var pantallaActual by remember { mutableStateOf("login") }
@@ -51,6 +52,20 @@ class MainActivity : ComponentActivity() {
                     val listaSolicitudes = remember {
                         mutableStateListOf<SolicitudActividad>().apply {
                             addAll(prefsManager.cargarSolicitudes())
+                        }
+                    }
+
+                    // Detectar clic desde la Notificación para navegar al detalle
+                    LaunchedEffect(activity?.intent) {
+                        val destino = activity?.intent?.getStringExtra("PANTALLA_DESTINO")
+                        val idSolicitud = activity?.intent?.getStringExtra("SOLICITUD_ID")
+
+                        if (destino == "detalle_solicitud" && !idSolicitud.isNullOrBlank()) {
+                            val encontrada = listaSolicitudes.find { it.id == idSolicitud }
+                            if (encontrada != null) {
+                                solicitudSeleccionada = encontrada
+                                pantallaActual = "detalle_solicitud"
+                            }
                         }
                     }
 
@@ -182,7 +197,7 @@ class MainActivity : ComponentActivity() {
                                 DetalleSolicitudScreen(
                                     solicitud = solicitud,
                                     onVolverClick = {
-                                        pantallaActual = "home_coordinador"
+                                        pantallaActual = "home_profesor"
                                     },
                                     onCambiarEstadoEntidad = { id, entidadStr, nuevoEstado ->
                                         val index = listaSolicitudes.indexOfFirst { it.id == id }
