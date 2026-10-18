@@ -9,6 +9,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+
+// 1. Importación explícita del modelo centralizado
+import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 
 // 2. Importación directa de la persistencia
 import cl.duoc.aplicacionmoviltherionslabs.data.PreferenciasManager
@@ -43,7 +47,7 @@ class MainActivity : ComponentActivity() {
                     var solicitudSeleccionada by remember { mutableStateOf<SolicitudActividad?>(null) }
                     var entidadLogueada by remember { mutableStateOf<TipoEntidad?>(null) }
 
-                    // Carga inicial de datos desde SharedPreferences (Persistencia Local - IE 2.3.1)
+                    // Carga inicial de datos desde SharedPreferences
                     val listaSolicitudes = remember {
                         mutableStateListOf<SolicitudActividad>().apply {
                             addAll(prefsManager.cargarSolicitudes())
@@ -54,13 +58,13 @@ class MainActivity : ComponentActivity() {
                         "login" -> {
                             LoginScreen(
                                 onLoginSuccess = { correo ->
-                                    val correoLibrería = correo.lowercase().trim()
-                                    val entidad = TipoEntidad.desdeCorreo(correoLibrería)
+                                    val correoLibreria = correo.lowercase().trim()
+                                    val entidad = TipoEntidad.desdeCorreo(correoLibreria)
 
                                     when {
-                                        correoLibrería.contains("extension") ||
-                                                correoLibrería.contains("coordinacion") ||
-                                                correoLibrería.contains("coordinador") -> {
+                                        correoLibreria.contains("extension") ||
+                                                correoLibreria.contains("coordinacion") ||
+                                                correoLibreria.contains("coordinador") -> {
                                             pantallaActual = "home_coordinador"
                                         }
                                         entidad != null -> {

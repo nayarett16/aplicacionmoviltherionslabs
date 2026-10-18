@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 // Modelo de datos compartido para las solicitudes
 data class SolicitudActividad(
     val id: String = java.util.UUID.randomUUID().toString(),

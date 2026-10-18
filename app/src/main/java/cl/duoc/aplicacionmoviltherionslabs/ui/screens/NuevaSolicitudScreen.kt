@@ -1,6 +1,5 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,7 +16,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cl.duoc.aplicacionmoviltherionslabs.model.Recurso
+import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioRecursos
+import cl.duoc.aplicacionmoviltherionslabs.model.RecursoModel
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.ConfirmacionDialog
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.SeleccionadorFechaDialog
@@ -28,6 +28,11 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+data class RecursoSeleccionable(
+    val recurso: RecursoModel,
+    var seleccionado: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaSolicitudScreen(
@@ -35,8 +40,6 @@ fun NuevaSolicitudScreen(
     onVerCalendarioClick: () -> Unit = {},
     onSolicitudCreada: (SolicitudActividad) -> Unit = {}
 ) {
-    // RECURSOS NATIVOS
-    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
     var nombreActividad by remember { mutableStateOf("") }
@@ -62,20 +65,14 @@ fun NuevaSolicitudScreen(
         )
     }
 
+    // Carga de recursos desde RepositorioRecursos
     var recursosList by remember {
         mutableStateOf(
-            listOf(
-                Recurso("1", "Micrófono Inalámbrico", "Área: CTA / Digitales"),
-                Recurso("2", "Proyector Portátil", "Área: CTA / Digitales"),
-                Recurso("3", "Cobertura Fotográfica", "Área: Comunicaciones"),
-                Recurso("4", "Apoyo Aseo / Camarines", "Área: Servicios Generales"),
-                Recurso("5", "Acceso / Control Público", "Área: Portería")
-            )
+            RepositorioRecursos.obtenerTodosLosRecursos().map { recursoModel ->
+                RecursoSeleccionable(recurso = recursoModel)
+            }
         )
     }
-
-    // Control de selección local mediante IDs
-    var idsSeleccionados by remember { mutableStateOf(setOf<String>()) }
 
     Scaffold(
         topBar = {
@@ -197,7 +194,7 @@ fun NuevaSolicitudScreen(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(recursosList) { recurso ->
+                items(recursosList) { item ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
                         shape = RoundedCornerShape(8.dp),
@@ -224,11 +221,11 @@ fun NuevaSolicitudScreen(
                                 )
                             }
                             Checkbox(
-                                checked = recurso.seleccionado,
+                                checked = item.seleccionado,
                                 onCheckedChange = { checked ->
-                                    recursosList = recursosList.map { item ->
-                                        if (item.id == recurso.id) item.copy(seleccionado = checked)
-                                        else item
+                                    recursosList = recursosList.map { elem ->
+                                        if (elem.recurso.id == item.recurso.id) elem.copy(seleccionado = checked)
+                                        else elem
                                     }
                                 },
                                 colors = CheckboxDefaults.colors(checkedColor = Color(0xFF002A5C))
@@ -253,11 +250,12 @@ fun NuevaSolicitudScreen(
             Button(
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    val recursosSeleccionados = recursosList.filter { it.seleccionado }
                     if (nombreActividad.isBlank() || responsable.isBlank() || escuelaArea.isBlank()) {
                         mensajeError = "Por favor completa todos los campos de texto."
                     } else if (fechaMillis == null || !horaSeleccionada) {
                         mensajeError = "Debes seleccionar fecha y hora para la actividad."
-                    } else if (idsSeleccionados.isEmpty()) {
+                    } else if (recursosSeleccionados.isEmpty()) {
                         mensajeError = "Debes seleccionar al menos un recurso."
                     } else {
                         mensajeError = null
@@ -286,13 +284,11 @@ fun NuevaSolicitudScreen(
         SeleccionadorFechaDialog(
             onFechaSeleccionada = { millis ->
                 millis?.let {
-                    // Configurar Calendario explícitamente en UTC para evitar el desfase de zona horaria
                     val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
                         timeInMillis = it
                     }
                     val diaSemana = cal.get(Calendar.DAY_OF_WEEK)
 
-                    // Formateadores configurados en UTC
                     val formatoDiaMes = SimpleDateFormat("dd/MM", Locale.getDefault()).apply {
                         timeZone = TimeZone.getTimeZone("UTC")
                     }.format(Date(it))
@@ -360,20 +356,7 @@ fun NuevaSolicitudScreen(
             textoConfirmar = "Enviar",
             onConfirmar = {
                 mostrarConfirmacion = false
-
-                // RECURSO NATIVO 1: Vibración
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-
-                // RECURSO NATIVO 2: Notificación Local del Sistema
-                NotificationHelper.mostrarNotificacionSolicitud(
-                    context = context,
-                    titulo = "¡Solicitud Enviada con Éxito! 🚀",
-                    mensaje = "Tu solicitud '$nombreActividad' ha sido registrada correctamente."
-                )
-
-                val nombresRecursosSeleccionados = recursosCatalogo
-                    .filter { idsSeleccionados.contains(it.id) }
-                    .map { it.nombre }
 
                 val nuevaSolicitud = SolicitudActividad(
                     id = System.currentTimeMillis().toString(),
@@ -382,7 +365,7 @@ fun NuevaSolicitudScreen(
                     escuelaArea = escuelaArea,
                     fechaTexto = fechaTexto,
                     horaTexto = horaTexto,
-                    recursosSeleccionados = recursosList.filter { it.seleccionado }.map { it.nombre },
+                    recursosSeleccionados = recursosList.filter { it.seleccionado }.map { "${it.recurso.nombre} (${it.recurso.area})" },
                     estadoComunicaciones = "Pendiente",
                     estadoServiciosGenerales = "Pendiente",
                     estadoCTA = "Pendiente",

@@ -1,7 +1,6 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,11 +13,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +27,6 @@ fun CalendarioScreen(
 ) {
     val datePickerState = rememberDatePickerState()
 
-    // Convertir los milisegundos seleccionados en el DatePicker a texto "dd/MM/yyyy" en UTC
     val fechaSeleccionadaTexto = remember(datePickerState.selectedDateMillis) {
         datePickerState.selectedDateMillis?.let { millis ->
             SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
@@ -37,7 +35,6 @@ fun CalendarioScreen(
         } ?: ""
     }
 
-    // Filtrar solicitudes únicamente para la fecha seleccionada en el calendario
     val solicitudesDelDia = remember(solicitudes, fechaSeleccionadaTexto) {
         if (fechaSeleccionadaTexto.isBlank()) {
             emptyList()
@@ -74,7 +71,6 @@ fun CalendarioScreen(
                 .background(Color(0xFFF8F9FA))
                 .padding(16.dp)
         ) {
-            // Componente de Calendario Visual
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(12.dp),
