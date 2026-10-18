@@ -15,7 +15,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
+
+// Modelo de datos compartido para las solicitudes
+data class SolicitudActividad(
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val nombreActividad: String = "",
+    val responsable: String = "",
+    val fechaTexto: String = "",
+    val horaTexto: String = "",
+    val lugar: String = "",
+    val descripcion: String = "",
+    val estadoGeneral: String = "Pendiente",
+    val estadoCTA: String = "Pendiente",
+    val estadoComunicaciones: String = "Pendiente",
+    val estadoServiciosGenerales: String = "Pendiente",
+    val estadoPorteria: String = "Pendiente",
+    val recursosSeleccionados: List<String> = emptyList()
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -203,6 +219,14 @@ fun ProfesorHomeScreen(
                                         fontSize = 11.sp,
                                         color = Color.Gray
                                     )
+                                    solicitud.recursosSeleccionados.forEach { recurso ->
+                                        Text(
+                                            text = "• $recurso",
+                                            fontSize = 12.sp,
+                                            color = Color.DarkGray,
+                                            modifier = Modifier.padding(start = 6.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -15,11 +15,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 
-enum class TipoEntidad(val nombreArea: String) {
-    CTA("CTA (Centro de Tecnologías Avanzadas)"),
-    COMUNICACIONES("Comunicaciones / Extensión"),
-    SERVICIOS("Servicios Generales"),
-    PORTERIA("Portería / Seguridad");
+enum class TipoEntidad(val nombreArea: String, val palabrasClave: List<String>) {
+    CTA("CTA / Digitales", listOf("Micrófono", "Proyector")),
+    COMUNICACIONES("Comunicaciones", listOf("Fotográfica", "Cobertura")),
+    SERVICIOS("Servicios Generales", listOf("Aseo", "Camarines")),
+    PORTERIA("Portería", listOf("Acceso", "Control"));
 
     companion object {
         fun desdeCorreo(correo: String): TipoEntidad? {
@@ -43,6 +43,13 @@ fun EntidadHomeScreen(
     onCambiarEstado: (solicitudId: String, nuevoEstado: String) -> Unit = { _, _ -> },
     onCerrarSesionClick: () -> Unit = {}
 ) {
+    // Filtrar solo las solicitudes que requieren recursos de esta área específica
+    val solicitudesFiltradas = solicitudes.filter { solicitud ->
+        solicitud.recursosSeleccionados.any { recurso ->
+            entidad.palabrasClave.any { palabra -> recurso.contains(palabra, ignoreCase = true) }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

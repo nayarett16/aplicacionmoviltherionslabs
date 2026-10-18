@@ -9,10 +9,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-
-// 1. Importación explícita del modelo desde el paquete model
-import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 
 // 2. Importación directa de la persistencia
 import cl.duoc.aplicacionmoviltherionslabs.data.PreferenciasManager
@@ -28,6 +24,7 @@ import cl.duoc.aplicacionmoviltherionslabs.ui.screens.CalendarioScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.TipoEntidad
 
 import cl.duoc.aplicacionmoviltherionslabs.ui.theme.AplicacionMovilTherionsLabsTheme
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
