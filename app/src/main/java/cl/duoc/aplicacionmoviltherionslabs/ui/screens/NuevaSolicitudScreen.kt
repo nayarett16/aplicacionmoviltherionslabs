@@ -1,5 +1,6 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +17,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cl.duoc.aplicacionmoviltherionslabs.data.NotificationHelper
 import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioRecursos
 import cl.duoc.aplicacionmoviltherionslabs.model.RecursoModel
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
@@ -32,7 +34,7 @@ data class RecursoSeleccionable(
     val recurso: RecursoModel,
     var seleccionado: Boolean = false
 )
-
+@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaSolicitudScreen(
@@ -40,6 +42,7 @@ fun NuevaSolicitudScreen(
     onVerCalendarioClick: () -> Unit = {},
     onSolicitudCreada: (SolicitudActividad) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
     var nombreActividad by remember { mutableStateOf("") }
@@ -56,7 +59,6 @@ fun NuevaSolicitudScreen(
     var mostrarConfirmacion by remember { mutableStateOf(false) }
     var mensajeError by remember { mutableStateOf<String?>(null) }
 
-    // Feriados nacionales oficiales de Chile (formato dd/MM)
     val feriadosChile = remember {
         setOf(
             "01/01", "03/04", "04/04", "01/05", "21/05", "21/06",
@@ -65,7 +67,6 @@ fun NuevaSolicitudScreen(
         )
     }
 
-    // Carga de recursos desde RepositorioRecursos
     var recursosList by remember {
         mutableStateOf(
             RepositorioRecursos.obtenerTodosLosRecursos().map { recursoModel ->
@@ -141,7 +142,6 @@ fun NuevaSolicitudScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Sección de Agenda y Selección de Fecha/Hora
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -189,7 +189,6 @@ fun NuevaSolicitudScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Catálogo de Recursos en Lista Desplazable
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -371,6 +370,15 @@ fun NuevaSolicitudScreen(
                     estadoCTA = "Pendiente",
                     estadoPorteria = "Pendiente"
                 )
+
+                // Disparar la notificación local con el ID de la solicitud recién creada
+                NotificationHelper.mostrarNotificacionSolicitud(
+                    context = context,
+                    titulo = "¡Solicitud Enviada con Éxito! 🚀",
+                    mensaje = "Tu solicitud '$nombreActividad' ha sido registrada correctamente.",
+                    solicitudId = nuevaSolicitud.id
+                )
+
                 onSolicitudCreada(nuevaSolicitud)
             },
             onDismiss = { mostrarConfirmacion = false }
