@@ -326,10 +326,21 @@ fun NuevaSolicitudScreen(
             onConfirmar = {
                 mostrarConfirmacion = false
 
-                // RECURSO NATIVO 1: Vibración
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                // 1. RECURSO NATIVO: Vibración física de hardware (500ms)
+                val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    vibrator.vibrate(
+                        android.os.VibrationEffect.createOneShot(
+                            500, // Duración en milisegundos
+                            android.os.VibrationEffect.DEFAULT_AMPLITUDE
+                        )
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(500)
+                }
 
-                // RECURSO NATIVO 2: Notificación Local del Sistema
+                // 2. RECURSO NATIVO: Notificación Local del Sistema
                 NotificationHelper.mostrarNotificacionSolicitud(
                     context = context,
                     titulo = "¡Solicitud Enviada con Éxito! 🚀",
