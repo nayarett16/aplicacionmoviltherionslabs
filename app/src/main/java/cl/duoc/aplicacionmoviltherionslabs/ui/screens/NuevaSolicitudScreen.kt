@@ -17,23 +17,25 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cl.duoc.aplicacionmoviltherionslabs.data.NotificationHelper
 import cl.duoc.aplicacionmoviltherionslabs.model.RecursoModel
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.ConfirmacionDialog
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.SeleccionadorFechaDialog
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.SeleccionadorHoraDialog
+import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioRecursos
+
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+// Modelo auxiliar integrado para evitar errores de archivos faltantes
 data class RecursoSeleccionable(
     val recurso: RecursoModel,
     var seleccionado: Boolean = false
 )
-@SuppressLint("MissingPermission")
+
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +44,6 @@ fun NuevaSolicitudScreen(
     onVerCalendarioClick: () -> Unit = {},
     onSolicitudCreada: (SolicitudActividad) -> Unit = {}
 ) {
-    // RECURSOS NATIVOS
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
@@ -60,7 +61,6 @@ fun NuevaSolicitudScreen(
     var mostrarConfirmacion by remember { mutableStateOf(false) }
     var mensajeError by remember { mutableStateOf<String?>(null) }
 
-    // Feriados nacionales oficiales de Chile (formato dd/MM)
     val feriadosChile = remember {
         setOf(
             "01/01", "03/04", "04/04", "01/05", "21/05", "21/06",
@@ -76,9 +76,6 @@ fun NuevaSolicitudScreen(
             }
         )
     }
-
-    // Control de selección local mediante IDs
-    var idsSeleccionados by remember { mutableStateOf(setOf<String>()) }
 
     Scaffold(
         topBar = {
