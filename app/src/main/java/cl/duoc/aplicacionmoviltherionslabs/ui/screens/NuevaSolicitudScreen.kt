@@ -1,7 +1,6 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
 import android.annotation.SuppressLint
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -110,182 +109,194 @@ fun NuevaSolicitudScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(Color.White)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            OutlinedTextField(
-                value = nombreActividad,
-                onValueChange = { nombreActividad = it },
-                label = { Text("Nombre de la Actividad") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
-            )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            item {
+                Column {
+                    OutlinedTextField(
+                        value = nombreActividad,
+                        onValueChange = { nombreActividad = it },
+                        label = { Text("Nombre de la Actividad") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    )
 
-            OutlinedTextField(
-                value = responsable,
-                onValueChange = { responsable = it },
-                label = { Text("Docente / Responsable Cargo") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
-            )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = responsable,
+                        onValueChange = { responsable = it },
+                        label = { Text("Docente / Responsable Cargo") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    )
 
-            OutlinedTextField(
-                value = escuelaArea,
-                onValueChange = { escuelaArea = it },
-                label = { Text("Escuela o Área Solicitante") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
-            )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = escuelaArea,
+                        onValueChange = { escuelaArea = it },
+                        label = { Text("Escuela o Área Solicitante") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    )
 
-            Text(
-                text = "⚠️ Mínimo 2 semanas de anticipación. Sin reservas domingos ni feriados.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.DarkGray,
-                modifier = Modifier.padding(bottom = 6.dp)
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Fecha y Horario Evento",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = Color(0xFF002A5C)
-                )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                TextButton(onClick = onVerCalendarioClick) {
-                    Text("📅 Consultar Agenda", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF002A5C))
+                    Text(
+                        text = "Mínimo 2 semanas de anticipación. Sin reservas domingos ni feriados.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.DarkGray,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { mostrarDatePicker = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(text = fechaTexto, fontSize = 12.sp, color = Color(0xFF002A5C))
-                }
 
-                OutlinedButton(
-                    onClick = { mostrarTimePicker = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(text = horaTexto, fontSize = 12.sp, color = Color(0xFF002A5C))
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Recursos Disponibles en Catálogo:",
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                color = Color(0xFF002A5C)
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(recursosList) { item ->
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+            item {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = item.recurso.nombre,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF002A5C)
-                                )
-                                Text(
-                                    text = "Área: ${item.recurso.area} | Disp: ${item.recurso.stockDisponible} ${item.recurso.unidadMedida}",
-                                    color = Color.Gray,
-                                    fontSize = 11.sp
-                                )
-                            }
-                            Checkbox(
-                                checked = item.seleccionado,
-                                onCheckedChange = { checked ->
-                                    recursosList = recursosList.map { elem ->
-                                        if (elem.recurso.id == item.recurso.id) elem.copy(seleccionado = checked)
-                                        else elem
-                                    }
-                                },
-                                colors = CheckboxDefaults.colors(checkedColor = Color(0xFF002A5C))
-                            )
+                        Text(
+                            text = "Fecha y Horario Evento",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color(0xFF002A5C)
+                        )
+
+                        TextButton(onClick = onVerCalendarioClick) {
+                            Text("📅 Consultar Agenda", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF002A5C))
                         }
                     }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { mostrarDatePicker = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(text = fechaTexto, fontSize = 12.sp, color = Color(0xFF002A5C))
+                        }
+
+                        OutlinedButton(
+                            onClick = { mostrarTimePicker = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(text = horaTexto, fontSize = 12.sp, color = Color(0xFF002A5C))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Recursos Disponibles en Catálogo:",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color(0xFF002A5C)
+                    )
                 }
             }
 
-            mensajeError?.let { error ->
-                Text(
-                    text = error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
+
+            items(recursosList, key = { it.recurso.id }) { item ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = item.recurso.nombre,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = Color(0xFF002A5C)
+                            )
+                            Text(
+                                text = "Área: ${item.recurso.area} | Disp: ${item.recurso.stockDisponible} ${item.recurso.unidadMedida}",
+                                color = Color.Gray,
+                                fontSize = 11.sp
+                            )
+                        }
+                        Checkbox(
+                            checked = item.seleccionado,
+                            onCheckedChange = { checked ->
+                                recursosList = recursosList.map { elem ->
+                                    if (elem.recurso.id == item.recurso.id) elem.copy(seleccionado = checked)
+                                    else elem
+                                }
+                            },
+                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF002A5C))
+                        )
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    val recursosSeleccionados = recursosList.filter { it.seleccionado }
-                    if (nombreActividad.isBlank() || responsable.isBlank() || escuelaArea.isBlank()) {
-                        mensajeError = "Por favor completa todos los campos de texto."
-                    } else if (fechaMillis == null || !horaSeleccionada) {
-                        mensajeError = "Debes seleccionar fecha y hora para la actividad."
-                    } else if (recursosSeleccionados.isEmpty()) {
-                        mensajeError = "Debes seleccionar al menos un recurso."
-                    } else {
-                        mensajeError = null
-                        mostrarConfirmacion = true
+            item {
+                Column {
+                    mensajeError?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
                     }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFC107),
-                    contentColor = Color(0xFF002A5C)
-                ),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-            ) {
-                Text(
-                    text = "Generar Comprobante de Solicitud",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            val recursosSeleccionados = recursosList.filter { it.seleccionado }
+                            if (nombreActividad.isBlank() || responsable.isBlank() || escuelaArea.isBlank()) {
+                                mensajeError = "Por favor completa todos los campos de texto."
+                            } else if (fechaMillis == null || !horaSeleccionada) {
+                                mensajeError = "Debes seleccionar fecha y hora para la actividad."
+                            } else if (recursosSeleccionados.isEmpty()) {
+                                mensajeError = "Debes seleccionar al menos un recurso."
+                            } else {
+                                mensajeError = null
+                                mostrarConfirmacion = true
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFFC107),
+                            contentColor = Color(0xFF002A5C)
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text(
+                            text = "Generar Comprobante de Solicitud",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
             }
         }
     }
@@ -308,11 +319,11 @@ fun NuevaSolicitudScreen(
                     }.format(Date(it))
 
                     if (diaSemana == Calendar.SUNDAY) {
-                        mensajeError = "❌ No se permiten reservas los días domingo."
+                        mensajeError = "No se permiten reservas los días domingo."
                         fechaMillis = null
                         fechaTexto = "Seleccionar Fecha"
                     } else if (feriadosChile.contains(formatoDiaMes)) {
-                        mensajeError = "❌ La fecha elegida corresponde a un feriado institucional."
+                        mensajeError = "La fecha elegida corresponde a un feriado institucional."
                         fechaMillis = null
                         fechaTexto = "Seleccionar Fecha"
                     } else {
@@ -343,9 +354,9 @@ fun NuevaSolicitudScreen(
 
                 if (!esValido) {
                     if (diaSemana == Calendar.SATURDAY) {
-                        mensajeError = "❌ Los sábados solo se permiten reservas entre 08:00 y 14:00 hrs."
+                        mensajeError = "Los sábados solo se permiten reservas entre 08:00 y 14:00 hrs."
                     } else {
-                        mensajeError = "❌ El horario permitido de lunes a viernes es de 08:00 a 22:30 hrs."
+                        mensajeError = "El horario permitido de lunes a viernes es de 08:00 a 22:30 hrs."
                     }
                     horaSeleccionada = false
                     horaTexto = "Seleccionar Hora"
@@ -367,7 +378,7 @@ fun NuevaSolicitudScreen(
             onConfirmar = {
                 mostrarConfirmacion = false
 
-                // 📳 1. VIBRACIÓN HÁPTICA SEGURA
+
                 try {
                     val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                         val vibratorManager = context.getSystemService(android.content.Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
@@ -387,7 +398,7 @@ fun NuevaSolicitudScreen(
                     e.printStackTrace()
                 }
 
-                // 🔔 2. NOTIFICACIÓN NATIVA
+
                 try {
                     val channelId = "solicitudes_channel_therion"
                     val notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager

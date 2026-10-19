@@ -32,7 +32,7 @@ fun ProfesorHomeScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Panel Docente",
+                        text = "Panel Comunidad",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
@@ -217,7 +217,7 @@ fun ProfesorHomeScreen(
         }
     }
 
-    // 🚪 Diálogo de confirmación para Cerrar Sesión (Corregido)
+    //  Diálogo de confirmación para Cerrar Sesión (Corregido)
     if (mostrarDialogoCerrarSesion) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoCerrarSesion = false },
@@ -230,8 +230,7 @@ fun ProfesorHomeScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        // 🚀 Llamamos directamente al cierre de sesión sin apagar el diálogo antes.
-                        // Al cambiar de pantalla, el diálogo se desmonta solo de forma limpia.
+
                         onCerrarSesionClick()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828))
@@ -241,7 +240,7 @@ fun ProfesorHomeScreen(
             },
             dismissButton = {
                 OutlinedButton(
-                    onClick = { mostrarDialogoCerrarSesion = false } // Aquí sí se cierra solo si cancela
+                    onClick = { mostrarDialogoCerrarSesion = false }
                 ) {
                     Text(text = "Cancelar", color = Color(0xFF002A5C))
                 }
