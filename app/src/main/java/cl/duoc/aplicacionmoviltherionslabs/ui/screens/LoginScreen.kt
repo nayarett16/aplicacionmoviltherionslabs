@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -83,6 +84,14 @@ fun LoginScreen(
     LaunchedEffect(Unit) {
         correosGuardados.clear()
         correosGuardados.addAll(obtenerCorreosGuardados(context))
+    }
+
+    // ⚡ INGRESO A 1 SOLO CLIC: Reacciona inmediatamente cuando isSuccess cambia a true
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            guardarCorreo(context, uiState.email)
+            onLoginSuccess(uiState.email)
+        }
     }
 
     Column(
@@ -220,10 +229,6 @@ fun LoginScreen(
         Button(
             onClick = {
                 loginViewModel.onLoginClicked()
-                if (uiState.isSuccess) {
-                    guardarCorreo(context, uiState.email)
-                    onLoginSuccess(uiState.email)
-                }
             },
             colors = ButtonDefaults.buttonColors(containerColor = DuocBlueAccent),
             shape = RoundedCornerShape(24.dp),
@@ -259,5 +264,35 @@ fun LoginScreen(
                 Text("5. Extensión: extension@duocuc.cl", color = DuocBlueAccent, fontSize = 11.sp)
             }
         }
+    }
+}
+
+// 🚪 COMPOSABLE REUTILIZABLE PARA EL DIÁLOGO DE CONFIRMACIÓN
+@Composable
+fun ConfirmarCerrarSesionDialog(
+    mostrar: Boolean,
+    onConfirmar: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (mostrar) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(text = "Cerrar Sesión", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(text = "¿Está seguro que desea cerrar sesión?")
+            },
+            confirmButton = {
+                TextButton(onClick = onConfirmar) {
+                    Text(text = "Sí, cerrar", color = DuocErrorRed, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(text = "Cancelar", color = DuocNavy)
+                }
+            }
+        )
     }
 }

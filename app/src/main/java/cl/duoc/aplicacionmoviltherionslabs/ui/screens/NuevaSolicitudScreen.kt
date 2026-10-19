@@ -1,6 +1,7 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,7 +31,6 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-// Modelo auxiliar integrado para evitar errores de archivos faltantes
 data class RecursoSeleccionable(
     val recurso: RecursoModel,
     var seleccionado: Boolean = false
@@ -366,7 +366,56 @@ fun NuevaSolicitudScreen(
             textoConfirmar = "Enviar",
             onConfirmar = {
                 mostrarConfirmacion = false
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+
+                // 📳 1. VIBRACIÓN HÁPTICA SEGURA
+                try {
+                    val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        val vibratorManager = context.getSystemService(android.content.Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
+                        vibratorManager.defaultVibrator
+                    } else {
+                        @Suppress("DEPRECATION")
+                        context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                    }
+
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        vibrator.vibrate(android.os.VibrationEffect.createOneShot(400, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        vibrator.vibrate(400)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
+                // 🔔 2. NOTIFICACIÓN NATIVA
+                try {
+                    val channelId = "solicitudes_channel_therion"
+                    val notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        val channel = android.app.NotificationChannel(
+                            channelId,
+                            "Solicitudes TherionLabs",
+                            android.app.NotificationManager.IMPORTANCE_HIGH
+                        ).apply {
+                            description = "Notificaciones de reservas creadas"
+                            enableVibration(true)
+                        }
+                        notificationManager.createNotificationChannel(channel)
+                    }
+
+                    val notification = androidx.core.app.NotificationCompat.Builder(context, channelId)
+                        .setSmallIcon(android.R.drawable.ic_dialog_info)
+                        .setContentTitle("¡Solicitud Creada con Éxito!")
+                        .setContentText("Tu reserva para '$nombreActividad' ha sido registrada.")
+                        .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+                        .setAutoCancel(true)
+                        .build()
+
+                    notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
 
                 val nuevaSolicitud = SolicitudActividad(
                     id = System.currentTimeMillis().toString(),

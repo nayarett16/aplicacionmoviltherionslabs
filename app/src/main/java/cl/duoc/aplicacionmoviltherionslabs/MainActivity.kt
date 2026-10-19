@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // 1. Importación explícita del modelo centralizado
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
@@ -17,7 +18,7 @@ import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 // 2. Importación directa de la persistencia
 import cl.duoc.aplicacionmoviltherionslabs.data.PreferenciasManager
 
-// 3. Importaciones explícitas de las pantallas
+// 3. Importaciones explícitas de las pantallas y ViewModels
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.LoginScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.ProfesorHomeScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.CoordinadorHomeScreen
@@ -26,6 +27,7 @@ import cl.duoc.aplicacionmoviltherionslabs.ui.screens.DetalleSolicitudScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.NuevaSolicitudScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.CalendarioScreen
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.TipoEntidad
+import cl.duoc.aplicacionmoviltherionslabs.ui.viewmodel.LoginViewModel
 
 import cl.duoc.aplicacionmoviltherionslabs.ui.theme.AplicacionMovilTherionsLabsTheme
 
@@ -43,16 +45,25 @@ class MainActivity : ComponentActivity() {
                     val activity = context as? ComponentActivity
                     val prefsManager = remember { PreferenciasManager(context) }
 
+                    val loginViewModel: LoginViewModel = viewModel()
+
                     var pantallaActual by remember { mutableStateOf("login") }
                     var pantallaAnterior by remember { mutableStateOf("home_profesor") }
                     var solicitudSeleccionada by remember { mutableStateOf<SolicitudActividad?>(null) }
                     var entidadLogueada by remember { mutableStateOf<TipoEntidad?>(null) }
 
-                    // Carga inicial de datos desde SharedPreferences
                     val listaSolicitudes = remember {
                         mutableStateListOf<SolicitudActividad>().apply {
                             addAll(prefsManager.cargarSolicitudes())
                         }
+                    }
+
+                    // Función centralizada para limpiar datos y volver al Login
+                    val realizarCerrarSesion = {
+                        loginViewModel.cerrarSesion()
+                        solicitudSeleccionada = null
+                        entidadLogueada = null
+                        pantallaActual = "login"
                     }
 
                     // Detectar clic desde la Notificación para navegar al detalle
@@ -72,6 +83,7 @@ class MainActivity : ComponentActivity() {
                     when (pantallaActual) {
                         "login" -> {
                             LoginScreen(
+                                loginViewModel = loginViewModel,
                                 onLoginSuccess = { correo ->
                                     val correoLibreria = correo.lowercase().trim()
                                     val entidad = TipoEntidad.desdeCorreo(correoLibreria)
@@ -87,7 +99,6 @@ class MainActivity : ComponentActivity() {
                                             pantallaActual = "home_entidad"
                                         }
                                         else -> {
-                                            // Por defecto: Comunidad / Docentes
                                             pantallaActual = "home_profesor"
                                         }
                                     }
@@ -106,7 +117,7 @@ class MainActivity : ComponentActivity() {
                                     pantallaActual = "calendario"
                                 },
                                 onCerrarSesionClick = {
-                                    pantallaActual = "login"
+                                    realizarCerrarSesion()
                                 }
                             )
                         }
@@ -151,21 +162,22 @@ class MainActivity : ComponentActivity() {
                                     pantallaActual = "calendario"
                                 },
                                 onCerrarSesionClick = {
-                                    pantallaActual = "login"
+                                    realizarCerrarSesion()
                                 }
                             )
                         }
 
                         "home_entidad" -> {
-                            entidadLogueada?.let { entidad ->
+                            val entidadActual = entidadLogueada
+                            if (entidadActual != null) {
                                 EntidadHomeScreen(
-                                    entidad = entidad,
+                                    entidad = entidadActual,
                                     solicitudes = listaSolicitudes,
                                     onCambiarEstado = { id, nuevoEstado ->
                                         val index = listaSolicitudes.indexOfFirst { it.id == id }
                                         if (index != -1) {
                                             val item = listaSolicitudes[index]
-                                            val itemActualizado = when (entidad) {
+                                            val itemActualizado = when (entidadActual) {
                                                 TipoEntidad.CTA -> item.copy(estadoCTA = nuevoEstado)
                                                 TipoEntidad.COMUNICACIONES -> item.copy(estadoComunicaciones = nuevoEstado)
                                                 TipoEntidad.SERVICIOS -> item.copy(estadoServiciosGenerales = nuevoEstado)
@@ -186,7 +198,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     onCerrarSesionClick = {
-                                        pantallaActual = "login"
+                                        realizarCerrarSesion()
                                     }
                                 )
                             }

@@ -39,8 +39,9 @@ fun EntidadHomeScreen(
     onCerrarSesionClick: () -> Unit
 ) {
     var mensajeAlerta by remember { mutableStateOf<String?>(null) }
+    var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
 
-    // Cargar los recursos que administra la entidad
+
     val recursosEntidad = remember(entidad) {
         RepositorioRecursos.obtenerTodosLosRecursos().filter {
             it.area.lowercase().contains(entidad.correoMatch) ||
@@ -77,7 +78,7 @@ fun EntidadHomeScreen(
                     )
                 },
                 actions = {
-                    TextButton(onClick = onCerrarSesionClick) {
+                    TextButton(onClick = { mostrarDialogoCerrarSesion = true }) {
                         Text("Salir", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
@@ -280,5 +281,37 @@ fun EntidadHomeScreen(
                 }
             }
         }
+    }
+
+    // Diálogo de confirmación para cerrar sesión corregido
+    if (mostrarDialogoCerrarSesion) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoCerrarSesion = false },
+            title = {
+                Text(text = "Cerrar Sesión", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(text = "¿Está seguro que desea cerrar sesión?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // 🚀 Llamamos directamente al cierre de sesión sin apagar el diálogo antes.
+                        // Al cambiar de pantalla, el diálogo se desmonta solo de forma limpia.
+                        onCerrarSesionClick()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828))
+                ) {
+                    Text(text = "Sí, cerrar", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { mostrarDialogoCerrarSesion = false } // Aquí sí se cierra solo si cancela
+                ) {
+                    Text(text = "Cancelar", color = Color(0xFF002A5C))
+                }
+            }
+        )
     }
 }

@@ -26,6 +26,8 @@ fun CoordinadorHomeScreen(
     onVerCalendarioClick: () -> Unit = {},
     onCerrarSesionClick: () -> Unit = {}
 ) {
+    var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -37,7 +39,7 @@ fun CoordinadorHomeScreen(
                     )
                 },
                 actions = {
-                    TextButton(onClick = onCerrarSesionClick) {
+                    TextButton(onClick = { mostrarDialogoCerrarSesion = true }) {
                         Text(
                             text = "Cerrar Sesión",
                             color = Color.White,
@@ -248,5 +250,37 @@ fun CoordinadorHomeScreen(
                 }
             }
         }
+    }
+
+    if (mostrarDialogoCerrarSesion) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoCerrarSesion = false },
+            title = {
+                Text(text = "Cerrar Sesión", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(text = "¿Está seguro que desea cerrar sesión?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // 1. Aquí se cierra el cuadro de diálogo visualmente primero
+                        mostrarDialogoCerrarSesion = false
+                        // 2. ⚠️ Asegúrate de que aquí se llame a la función:
+                        onCerrarSesionClick()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828))
+                ) {
+                    Text(text = "Sí, cerrar", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { mostrarDialogoCerrarSesion = false }
+                ) {
+                    Text(text = "Cancelar", color = Color(0xFF002A5C))
+                }
+            }
+        )
     }
 }

@@ -16,22 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
-// Modelo de datos compartido para las solicitudes
-data class SolicitudActividad(
-    val id: String = java.util.UUID.randomUUID().toString(),
-    val nombreActividad: String = "",
-    val responsable: String = "",
-    val fechaTexto: String = "",
-    val horaTexto: String = "",
-    val lugar: String = "",
-    val descripcion: String = "",
-    val estadoGeneral: String = "Pendiente",
-    val estadoCTA: String = "Pendiente",
-    val estadoComunicaciones: String = "Pendiente",
-    val estadoServiciosGenerales: String = "Pendiente",
-    val estadoPorteria: String = "Pendiente",
-    val recursosSeleccionados: List<String> = emptyList()
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +25,8 @@ fun ProfesorHomeScreen(
     onVerCalendarioClick: () -> Unit,
     onCerrarSesionClick: () -> Unit
 ) {
+    var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -53,7 +39,7 @@ fun ProfesorHomeScreen(
                     )
                 },
                 actions = {
-                    TextButton(onClick = onCerrarSesionClick) {
+                    TextButton(onClick = { mostrarDialogoCerrarSesion = true }) {
                         Text("Cerrar Sesión", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 },
@@ -214,11 +200,6 @@ fun ProfesorHomeScreen(
 
                                 if (solicitud.recursosSeleccionados.isNotEmpty()) {
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "Recursos: ${solicitud.recursosSeleccionados.joinToString(", ")}",
-                                        fontSize = 11.sp,
-                                        color = Color.Gray
-                                    )
                                     solicitud.recursosSeleccionados.forEach { recurso ->
                                         Text(
                                             text = "• $recurso",
@@ -234,5 +215,37 @@ fun ProfesorHomeScreen(
                 }
             }
         }
+    }
+
+    // 🚪 Diálogo de confirmación para Cerrar Sesión (Corregido)
+    if (mostrarDialogoCerrarSesion) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoCerrarSesion = false },
+            title = {
+                Text(text = "Cerrar Sesión", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(text = "¿Está seguro que desea cerrar sesión?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // 🚀 Llamamos directamente al cierre de sesión sin apagar el diálogo antes.
+                        // Al cambiar de pantalla, el diálogo se desmonta solo de forma limpia.
+                        onCerrarSesionClick()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828))
+                ) {
+                    Text(text = "Sí, cerrar", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { mostrarDialogoCerrarSesion = false } // Aquí sí se cierra solo si cancela
+                ) {
+                    Text(text = "Cancelar", color = Color(0xFF002A5C))
+                }
+            }
+        )
     }
 }

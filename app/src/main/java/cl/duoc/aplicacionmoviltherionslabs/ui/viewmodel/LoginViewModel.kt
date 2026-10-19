@@ -79,4 +79,19 @@ class LoginViewModel : ViewModel() {
             _uiState.update { it.copy(isLoading = false, isSuccess = true) }
         }
     }
+
+    // 🚀 FUNCIÓN CLAVE PARA CERRAR SESIÓN DE FORMA LIMPIA
+    fun cerrarSesion() {
+        _uiState.update {
+            LoginUiState(
+                email = "",
+                password = "",
+                isPasswordVisible = false,
+                emailError = null,
+                passwordError = null,
+                isLoading = false,
+                isSuccess = false
+            )
+        }
+    }
 }
