@@ -127,6 +127,7 @@ class MainActivity : ComponentActivity() {
                                 solicitudes = listaSolicitudes,
                                 onSolicitudClick = { solicitud ->
                                     solicitudSeleccionada = solicitud
+                                    pantallaAnterior="home_coordinador"
                                     pantallaActual = "detalle_solicitud"
                                 },
                                 onAprobarSolicitud = { id ->
@@ -209,7 +210,7 @@ class MainActivity : ComponentActivity() {
                                 DetalleSolicitudScreen(
                                     solicitud = solicitud,
                                     onVolverClick = {
-                                        pantallaActual = "home_profesor"
+                                        pantallaActual = pantallaAnterior
                                     },
                                     onCambiarEstadoEntidad = { id, entidadStr, nuevoEstado ->
                                         val index = listaSolicitudes.indexOfFirst { it.id == id }
