@@ -1,6 +1,11 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +22,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import cl.duoc.aplicacionmoviltherionslabs.data.NotificationHelper
 import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioRecursos
 import cl.duoc.aplicacionmoviltherionslabs.model.RecursoModel
@@ -45,6 +51,23 @@ fun NuevaSolicitudScreen(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+
+    // Permiso de notificaciones para Android 13 (API 33)+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 
     var nombreActividad by remember { mutableStateOf("") }
     var responsable by remember { mutableStateOf("") }
@@ -375,6 +398,7 @@ fun NuevaSolicitudScreen(
             onConfirmar = {
                 mostrarConfirmacion = false
 
+                // 1. Vibración háptica
                 try {
                     val vibrator =
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
@@ -401,6 +425,7 @@ fun NuevaSolicitudScreen(
                     e.printStackTrace()
                 }
 
+                // 2. Generación de ID y objeto Solicitud
                 val idGenerado = System.currentTimeMillis().toString()
                 val nuevaSolicitud = SolicitudActividad(
                     id = idGenerado,
@@ -417,6 +442,7 @@ fun NuevaSolicitudScreen(
                     estadoPorteria = "Pendiente"
                 )
 
+                // 3. Disparar notificación de sistema
                 NotificationHelper.mostrarNotificacionSolicitud(
                     context = context,
                     titulo = "¡Solicitud Creada con Éxito!",
@@ -424,6 +450,7 @@ fun NuevaSolicitudScreen(
                     solicitudId = idGenerado
                 )
 
+                // 4. Retornar evento
                 onSolicitudCreada(nuevaSolicitud)
             },
             onDismiss = { mostrarConfirmacion = false }
