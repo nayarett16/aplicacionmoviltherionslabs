@@ -17,13 +17,13 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cl.duoc.aplicacionmoviltherionslabs.data.NotificationHelper
+import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioRecursos
 import cl.duoc.aplicacionmoviltherionslabs.model.RecursoModel
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.ConfirmacionDialog
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.SeleccionadorFechaDialog
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.SeleccionadorHoraDialog
-import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioRecursos
-
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -160,7 +160,6 @@ fun NuevaSolicitudScreen(
                 }
             }
 
-
             item {
                 Column {
                     Row(
@@ -210,7 +209,6 @@ fun NuevaSolicitudScreen(
                 }
             }
 
-
             items(recursosList, key = { it.recurso.id }) { item ->
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
@@ -250,7 +248,6 @@ fun NuevaSolicitudScreen(
                     }
                 }
             }
-
 
             item {
                 Column {
@@ -378,18 +375,24 @@ fun NuevaSolicitudScreen(
             onConfirmar = {
                 mostrarConfirmacion = false
 
-
                 try {
-                    val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                        val vibratorManager = context.getSystemService(android.content.Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
-                        vibratorManager.defaultVibrator
-                    } else {
-                        @Suppress("DEPRECATION")
-                        context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
-                    }
+                    val vibrator =
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                            val vibratorManager =
+                                context.getSystemService(android.content.Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
+                            vibratorManager.defaultVibrator
+                        } else {
+                            @Suppress("DEPRECATION")
+                            context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                        }
 
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                        vibrator.vibrate(android.os.VibrationEffect.createOneShot(400, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                        vibrator.vibrate(
+                            android.os.VibrationEffect.createOneShot(
+                                400,
+                                android.os.VibrationEffect.DEFAULT_AMPLITUDE
+                            )
+                        )
                     } else {
                         @Suppress("DEPRECATION")
                         vibrator.vibrate(400)
@@ -398,49 +401,29 @@ fun NuevaSolicitudScreen(
                     e.printStackTrace()
                 }
 
-
-                try {
-                    val channelId = "solicitudes_channel_therion"
-                    val notificationManager = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                        val channel = android.app.NotificationChannel(
-                            channelId,
-                            "Solicitudes TherionLabs",
-                            android.app.NotificationManager.IMPORTANCE_HIGH
-                        ).apply {
-                            description = "Notificaciones de reservas creadas"
-                            enableVibration(true)
-                        }
-                        notificationManager.createNotificationChannel(channel)
-                    }
-
-                    val notification = androidx.core.app.NotificationCompat.Builder(context, channelId)
-                        .setSmallIcon(android.R.drawable.ic_dialog_info)
-                        .setContentTitle("¡Solicitud Creada con Éxito!")
-                        .setContentText("Tu reserva para '$nombreActividad' ha sido registrada.")
-                        .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
-                        .setAutoCancel(true)
-                        .build()
-
-                    notificationManager.notify(System.currentTimeMillis().toInt(), notification)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-
+                val idGenerado = System.currentTimeMillis().toString()
                 val nuevaSolicitud = SolicitudActividad(
-                    id = System.currentTimeMillis().toString(),
+                    id = idGenerado,
                     nombreActividad = nombreActividad,
                     responsable = responsable,
                     escuelaArea = escuelaArea,
                     fechaTexto = fechaTexto,
                     horaTexto = horaTexto,
-                    recursosSeleccionados = recursosList.filter { it.seleccionado }.map { "${it.recurso.nombre} (${it.recurso.area})" },
+                    recursosSeleccionados = recursosList.filter { it.seleccionado }
+                        .map { "${it.recurso.nombre} (${it.recurso.area})" },
                     estadoComunicaciones = "Pendiente",
                     estadoServiciosGenerales = "Pendiente",
                     estadoCTA = "Pendiente",
                     estadoPorteria = "Pendiente"
                 )
+
+                NotificationHelper.mostrarNotificacionSolicitud(
+                    context = context,
+                    titulo = "¡Solicitud Creada con Éxito!",
+                    mensaje = "Tu reserva para '$nombreActividad' ha sido registrada.",
+                    solicitudId = idGenerado
+                )
+
                 onSolicitudCreada(nuevaSolicitud)
             },
             onDismiss = { mostrarConfirmacion = false }

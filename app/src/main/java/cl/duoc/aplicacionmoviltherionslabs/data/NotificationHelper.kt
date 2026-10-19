@@ -24,6 +24,7 @@ object NotificationHelper {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        // Crear el canal para Android 8.0+ habilitando vibración y luces para avisos emergentes
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -31,6 +32,8 @@ object NotificationHelper {
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Canal para avisos de solicitudes de actividades"
+                enableVibration(true)
+                enableLights(true)
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -52,7 +55,8 @@ object NotificationHelper {
             .setSmallIcon(android.R.drawable.stat_notify_chat)
             .setContentTitle(titulo)
             .setContentText(mensaje)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
