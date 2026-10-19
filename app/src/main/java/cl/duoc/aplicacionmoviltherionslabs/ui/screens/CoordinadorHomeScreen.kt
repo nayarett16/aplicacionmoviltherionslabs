@@ -44,6 +44,24 @@ fun CoordinadorHomeScreen(
         }
     }
 
+    var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
+    var mensajeAlerta by remember { mutableStateOf<String?>(null) }
+
+    // 1. Obtener catálogo completo de recursos de todas las áreas
+    val todosLosRecursos = remember { RepositorioRecursos.obtenerTodosLosRecursos() }
+
+    // 2. Calcular stock disponible descontando solicitudes aprobadas
+    val mapaStockGlobal = remember(solicitudes, todosLosRecursos) {
+        todosLosRecursos.associate { recurso ->
+            val cantidadUsada = solicitudes.count { solicitud ->
+                solicitud.estadoGeneral == "Aprobado" &&
+                        solicitud.recursosSeleccionados.any { it.contains(recurso.nombre, ignoreCase = true) }
+            }
+            val stockRestante = (recurso.stockDisponible - cantidadUsada).coerceAtLeast(0)
+            recurso.id to stockRestante
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -161,7 +179,7 @@ fun CoordinadorHomeScreen(
                 }
             }
 
-            // ITEM 3: ALERTAS DE STOCK (SI EXISTEN)
+            // ITEM 3: ALERTA DE BLOQUEO POR FALTA DE STOCK (SI APLICA)
             mensajeAlerta?.let { alerta ->
                 item {
                     Text(
@@ -202,7 +220,7 @@ fun CoordinadorHomeScreen(
                 }
             }
 
-            // ITEM 5: LISTADO DE SOLICITUDES
+            // ITEM 5: TARJETAS DE SOLICITUDES
             if (solicitudes.isEmpty()) {
                 item {
                     Card(
@@ -225,7 +243,7 @@ fun CoordinadorHomeScreen(
                     }
                 }
             } else {
-                items(solicitudes) { solicitud ->
+                items(solicitudes, key = { it.id }) { solicitud ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
                         shape = RoundedCornerShape(8.dp),
