@@ -92,7 +92,7 @@ fun EntidadHomeScreen(
                 .background(Color(0xFFF8F9FA))
                 .padding(16.dp)
         ) {
-            // Guincha de Stock
+
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF002A5C)),
                 shape = RoundedCornerShape(12.dp),
@@ -102,7 +102,7 @@ fun EntidadHomeScreen(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = " GUINCHA DE INVENTARIO Y STOCK DISPONIBLE",
+                        text = "INVENTARIO Y STOCK DISPONIBLE",
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         color = Color(0xFFFFC107)
