@@ -1,5 +1,16 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,7 +52,6 @@ fun EntidadHomeScreen(
     var mensajeAlerta by remember { mutableStateOf<String?>(null) }
     var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
 
-
     val recursosEntidad = remember(entidad) {
         RepositorioRecursos.obtenerTodosLosRecursos().filter {
             it.area.lowercase().contains(entidad.correoMatch) ||
@@ -50,7 +60,7 @@ fun EntidadHomeScreen(
         }
     }
 
-    // Mapa de stock restante ajustado por aprobaciones previa de esta entidad
+    // Mapa de stock restante ajustado por aprobaciones previas de esta entidad
     val mapaStockDisponible = remember(solicitudes, recursosEntidad) {
         recursosEntidad.associate { recurso ->
             val cantidadUsada = solicitudes.count { solicitud ->
@@ -119,10 +129,16 @@ fun EntidadHomeScreen(
                         ) {
                             recursosEntidad.forEach { recurso ->
                                 val stock = mapaStockDisponible[recurso.id] ?: 0
+
+                                // Animación de color cuando el stock llega a 0
+                                val colorTarjetaStock by animateColorAsState(
+                                    targetValue = if (stock > 0) Color(0xFF1E3A8A) else Color(0xFF7F1D1D),
+                                    animationSpec = tween(durationMillis = 400),
+                                    label = "ColorTarjetaStock"
+                                )
+
                                 Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = if (stock > 0) Color(0xFF1E3A8A) else Color(0xFF7F1D1D)
-                                    ),
+                                    colors = CardDefaults.cardColors(containerColor = colorTarjetaStock),
                                     shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier.weight(1f)
                                 ) {
@@ -137,12 +153,22 @@ fun EntidadHomeScreen(
                                             color = Color.White,
                                             maxLines = 1
                                         )
-                                        Text(
-                                            text = "Stock: $stock",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp,
-                                            color = if (stock > 0) Color(0xFF4ADE80) else Color(0xFFFCA5A5)
-                                        )
+                                        // Animación numérica al descontar o devolver stock
+                                        AnimatedContent(
+                                            targetState = stock,
+                                            transitionSpec = {
+                                                (slideInVertically { -it } + fadeIn())
+                                                    .togetherWith(slideOutVertically { it } + fadeOut())
+                                            },
+                                            label = "ContadorStockAnimado"
+                                        ) { stockAnimado ->
+                                            Text(
+                                                text = "Stock: $stockAnimado",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp,
+                                                color = if (stockAnimado > 0) Color(0xFF4ADE80) else Color(0xFFFCA5A5)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -151,9 +177,14 @@ fun EntidadHomeScreen(
                 }
             }
 
-            mensajeAlerta?.let { alerta ->
+            // Aparición/desaparición suave del mensaje de alerta por falta de stock
+            AnimatedVisibility(
+                visible = mensajeAlerta != null,
+                enter = expandVertically(tween(250)) + fadeIn(tween(250)),
+                exit = shrinkVertically(tween(200)) + fadeOut(tween(200))
+            ) {
                 Text(
-                    text = alerta,
+                    text = mensajeAlerta ?: "",
                     color = MaterialTheme.colorScheme.error,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -175,7 +206,10 @@ fun EntidadHomeScreen(
                 }
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(solicitudes) { solicitud ->
+                    items(
+                        items = solicitudes,
+                        key = { it.id }
+                    ) { solicitud ->
                         // FILTRAR UNICAMENTE LOS RECURSOS QUE PERTENECEN A ESTA ENTIDAD
                         val recursosDelArea = solicitud.recursosSeleccionados.filter { textoRecurso ->
                             textoRecurso.contains("(${entidad.etiquetaRecurso})", ignoreCase = true) ||
@@ -191,11 +225,34 @@ fun EntidadHomeScreen(
                                 TipoEntidad.PORTERIA -> solicitud.estadoPorteria
                             }
 
+                            // Animación suave de color para el estado de la solicitud
+                            val colorEstadoTexto by animateColorAsState(
+                                targetValue = when (estadoActual) {
+                                    "Aprobado" -> Color(0xFF2E7D32)
+                                    "Rechazado" -> Color(0xFFC62828)
+                                    else -> Color(0xFFF57F17)
+                                },
+                                animationSpec = tween(durationMillis = 350),
+                                label = "ColorEstadoEntidad"
+                            )
+
+                            val colorEstadoFondo by animateColorAsState(
+                                targetValue = when (estadoActual) {
+                                    "Aprobado" -> Color(0xFFE8F5E9)
+                                    "Rechazado" -> Color(0xFFFFEBEE)
+                                    else -> Color(0xFFFFF8E1)
+                                },
+                                animationSpec = tween(durationMillis = 350),
+                                label = "FondoEstadoEntidad"
+                            )
+
                             Card(
                                 colors = CardDefaults.cardColors(containerColor = Color.White),
                                 shape = RoundedCornerShape(8.dp),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .animateItem()
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Text(
@@ -235,12 +292,18 @@ fun EntidadHomeScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(
-                                            text = "Estado: $estadoActual",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 12.sp,
-                                            color = if (estadoActual == "Aprobado") Color(0xFF2E7D32) else Color(0xFFC62828)
-                                        )
+                                        Surface(
+                                            color = colorEstadoFondo,
+                                            shape = RoundedCornerShape(6.dp)
+                                        ) {
+                                            Text(
+                                                text = "Estado: $estadoActual",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 12.sp,
+                                                color = colorEstadoTexto,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                            )
+                                        }
 
                                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                             Button(
@@ -283,7 +346,7 @@ fun EntidadHomeScreen(
         }
     }
 
-    // Diálogo de confirmación para cerrar sesión corregido
+    // Diálogo de confirmación para cerrar sesión
     if (mostrarDialogoCerrarSesion) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoCerrarSesion = false },
@@ -296,8 +359,6 @@ fun EntidadHomeScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        // 🚀 Llamamos directamente al cierre de sesión sin apagar el diálogo antes.
-                        // Al cambiar de pantalla, el diálogo se desmonta solo de forma limpia.
                         onCerrarSesionClick()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828))
@@ -307,7 +368,7 @@ fun EntidadHomeScreen(
             },
             dismissButton = {
                 OutlinedButton(
-                    onClick = { mostrarDialogoCerrarSesion = false } // Aquí sí se cierra solo si cancela
+                    onClick = { mostrarDialogoCerrarSesion = false }
                 ) {
                     Text(text = "Cancelar", color = Color(0xFF002A5C))
                 }

@@ -1,8 +1,14 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +33,15 @@ fun ProfesorHomeScreen(
     onCerrarSesionClick: () -> Unit
 ) {
     var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
+
+    // Estado para la micro-interacción táctil del botón principal
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val escalaBoton by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "EscalaBotonSolicitud"
+    )
 
     Scaffold(
         topBar = {
@@ -99,11 +115,16 @@ fun ProfesorHomeScreen(
 
             Button(
                 onClick = onNuevaSolicitudClick,
+                interactionSource = interactionSource,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107), contentColor = Color(0xFF002A5C)),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
+                    .graphicsLayer {
+                        scaleX = escalaBoton
+                        scaleY = escalaBoton
+                    }
             ) {
                 Text("➕ Crear Nueva Solicitud de Evento", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
@@ -144,11 +165,22 @@ fun ProfesorHomeScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(solicitudes, key = { it.id }) { solicitud ->
+                        var expandida by remember { mutableStateOf(false) }
+
                         Card(
                             colors = CardDefaults.cardColors(containerColor = Color.White),
                             shape = RoundedCornerShape(8.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .animateItem()
+                                .animateContentSize(
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioLowBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    )
+                                )
+                                .clickable { expandida = !expandida }
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Row(
@@ -209,6 +241,33 @@ fun ProfesorHomeScreen(
                                         )
                                     }
                                 }
+
+                                // Detalle desplegable por área al tocar la tarjeta
+                                if (expandida) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    HorizontalDivider(color = Color(0xFFEEEEEE))
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    Text(
+                                        text = "Estado por Departamento:",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF002A5C)
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text("• CTA: ${solicitud.estadoCTA}", fontSize = 11.sp, color = Color.DarkGray)
+                                    Text("• Comunicaciones: ${solicitud.estadoComunicaciones}", fontSize = 11.sp, color = Color.DarkGray)
+                                    Text("• Servicios Generales: ${solicitud.estadoServiciosGenerales}", fontSize = 11.sp, color = Color.DarkGray)
+                                    Text("• Portería: ${solicitud.estadoPorteria}", fontSize = 11.sp, color = Color.DarkGray)
+                                }
+
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = if (expandida) "▲ Ocultar detalle por área" else "▼ Ver estado por área",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF1E3A8A)
+                                )
                             }
                         }
                     }
@@ -217,7 +276,7 @@ fun ProfesorHomeScreen(
         }
     }
 
-    //  Diálogo de confirmación para Cerrar Sesión (Corregido)
+    // Diálogo de confirmación para Cerrar Sesión
     if (mostrarDialogoCerrarSesion) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoCerrarSesion = false },
@@ -230,7 +289,6 @@ fun ProfesorHomeScreen(
             confirmButton = {
                 Button(
                     onClick = {
-
                         onCerrarSesionClick()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828))
