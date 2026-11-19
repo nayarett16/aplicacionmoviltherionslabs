@@ -7,9 +7,11 @@ package cl.duoc.aplicacionmoviltherionslabs.model
 data class RecursoModel(
     val id: String,
     val nombre: String,
-    val area: String, // CTA, COM, SERVICIOS, PORTERIA, EXTENSION
+    val area: String,
     val stockTotal: Int,
     val stockDisponible: Int,
-    val unidadMedida: String = "unidades",
-    val estaDisponible: Boolean = stockDisponible > 0
-)
+    val unidadMedida: String = "unidades"
+) {
+    val estaDisponible: Boolean
+        get() = stockDisponible > 0
+}

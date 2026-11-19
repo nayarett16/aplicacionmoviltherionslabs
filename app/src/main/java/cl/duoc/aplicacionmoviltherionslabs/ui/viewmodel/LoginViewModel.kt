@@ -1,10 +1,14 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import cl.duoc.aplicacionmoviltherionslabs.network.LoginRequest
+import cl.duoc.aplicacionmoviltherionslabs.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class LoginUiState(
     val email: String = "",
@@ -21,7 +25,6 @@ class LoginViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    // Cuentas de prueba oficiales
     private val cuentasPrueba = setOf(
         "comunidad@duocuc.cl",
         "cta@duocuc.cl",
@@ -57,12 +60,6 @@ class LoginViewModel : ViewModel() {
         } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(currentEmail).matches()) {
             emailErr = "Ingrese un correo válido"
             hasError = true
-        } else if (!currentEmail.endsWith("@duocuc.cl") && !currentEmail.endsWith("@duoc.cl")) {
-            emailErr = "Debe usar un correo institucional @duocuc.cl"
-            hasError = true
-        } else if (!cuentasPrueba.contains(currentEmail) && !currentEmail.contains("profesor")) {
-            emailErr = "Cuenta no registrada en el sistema de reservas"
-            hasError = true
         }
 
         if (currentPassword.isBlank()) {
@@ -75,23 +72,46 @@ class LoginViewModel : ViewModel() {
 
         if (hasError) {
             _uiState.update { it.copy(emailError = emailErr, passwordError = passErr, isSuccess = false) }
-        } else {
-            _uiState.update { it.copy(isLoading = false, isSuccess = true) }
+            return
+        }
+
+        // Llamada real al microservicio de Usuarios (puerto 8081)
+        _uiState.update { it.copy(isLoading = true, emailError = null, passwordError = null) }
+
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.usuariosApi.login(
+                    LoginRequest(correo = currentEmail, password = currentPassword)
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    _uiState.update { it.copy(isLoading = false, isSuccess = true) }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            passwordError = "Correo o contraseña incorrectos en el servidor",
+                            isSuccess = false
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                // Respaldo local si el microservicio no está encendido
+                if (cuentasPrueba.contains(currentEmail) && currentPassword == "demo1234") {
+                    _uiState.update { it.copy(isLoading = false, isSuccess = true) }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            emailError = "No se pudo conectar al servidor (8081)",
+                            isSuccess = false
+                        )
+                    }
+                }
+            }
         }
     }
 
-    // 🚀 FUNCIÓN CLAVE PARA CERRAR SESIÓN DE FORMA LIMPIA
     fun cerrarSesion() {
-        _uiState.update {
-            LoginUiState(
-                email = "",
-                password = "",
-                isPasswordVisible = false,
-                emailError = null,
-                passwordError = null,
-                isLoading = false,
-                isSuccess = false
-            )
-        }
+        _uiState.update { LoginUiState() }
     }
 }
