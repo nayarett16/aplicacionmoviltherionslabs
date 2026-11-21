@@ -1,5 +1,12 @@
 package cl.duoc.aplicacionmoviltherionslabs.ui.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -88,109 +95,139 @@ fun CalendarioScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = if (fechaSeleccionadaTexto.isNotBlank())
-                    "Actividades para el $fechaSeleccionadaTexto"
-                else
-                    "Selecciona una fecha en el calendario",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF002A5C),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            // Animación suave en el título al cambiar de día
+            AnimatedContent(
+                targetState = fechaSeleccionadaTexto,
+                transitionSpec = {
+                    (fadeIn(tween(250)) + slideInVertically { -it / 2 })
+                        .togetherWith(fadeOut(tween(200)) + slideOutVertically { it / 2 })
+                },
+                label = "TituloFechaAnimado"
+            ) { fecha ->
+                Text(
+                    text = if (fecha.isNotBlank())
+                        "Actividades para el $fecha"
+                    else
+                        "Selecciona una fecha en el calendario",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF002A5C),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
 
-            if (fechaSeleccionadaTexto.isBlank()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Haz clic en un día del calendario para revisar sus eventos.",
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
-                }
-            } else if (solicitudesDelDia.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No hay eventos creados en la agenda para este día.",
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    items(solicitudesDelDia) { solicitud ->
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            shape = RoundedCornerShape(8.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                            modifier = Modifier.fillMaxWidth()
+            // Animación al filtrar eventos por día o mostrar mensajes vacíos
+            AnimatedContent(
+                targetState = Pair(fechaSeleccionadaTexto, solicitudesDelDia),
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(300)) + slideInVertically(animationSpec = tween(300)) { it / 6 })
+                        .togetherWith(fadeOut(animationSpec = tween(200)))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                label = "ListaEventosDiaAnimada"
+            ) { (fecha, eventos) ->
+                when {
+                    fecha.isBlank() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                            Text(
+                                text = "Haz clic en un día del calendario para revisar sus eventos.",
+                                color = Color.Gray,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+
+                    eventos.isEmpty() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No hay eventos creados en la agenda para este día.",
+                                color = Color.Gray,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+
+                    else -> {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(
+                                items = eventos,
+                                key = { it.id }
+                            ) { solicitud ->
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                                    shape = RoundedCornerShape(8.dp),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .animateItem()
                                 ) {
-                                    Text(
-                                        text = solicitud.nombreActividad,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 15.sp,
-                                        color = Color(0xFF002A5C)
-                                    )
-
-                                    Surface(
-                                        color = when (solicitud.estadoGeneral) {
-                                            "Aprobado" -> Color(0xFFE8F5E9)
-                                            "Rechazado" -> Color(0xFFFFEBEE)
-                                            else -> Color(0xFFFFF8E1)
-                                        },
-                                        shape = RoundedCornerShape(8.dp)
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp)
                                     ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = solicitud.nombreActividad,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 15.sp,
+                                                color = Color(0xFF002A5C)
+                                            )
+
+                                            Surface(
+                                                color = when (solicitud.estadoGeneral) {
+                                                    "Aprobado" -> Color(0xFFE8F5E9)
+                                                    "Rechazado" -> Color(0xFFFFEBEE)
+                                                    else -> Color(0xFFFFF8E1)
+                                                },
+                                                shape = RoundedCornerShape(8.dp)
+                                            ) {
+                                                Text(
+                                                    text = solicitud.estadoGeneral.uppercase(),
+                                                    color = when (solicitud.estadoGeneral) {
+                                                        "Aprobado" -> Color(0xFF2E7D32)
+                                                        "Rechazado" -> Color(0xFFC62828)
+                                                        else -> Color(0xFFF57F17)
+                                                    },
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 10.sp,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+
                                         Text(
-                                            text = solicitud.estadoGeneral.uppercase(),
-                                            color = when (solicitud.estadoGeneral) {
-                                                "Aprobado" -> Color(0xFF2E7D32)
-                                                "Rechazado" -> Color(0xFFC62828)
-                                                else -> Color(0xFFF57F17)
-                                            },
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 10.sp,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            text = "⏰ Hora: ${solicitud.horaTexto}  |  🏫 ${solicitud.escuelaArea}",
+                                            color = Color.DarkGray,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold
                                         )
+
+                                        if (solicitud.responsable.isNotBlank()) {
+                                            Text(
+                                                text = "👤 Responsable: ${solicitud.responsable}",
+                                                color = Color.Gray,
+                                                fontSize = 12.sp
+                                            )
+                                        }
                                     }
-                                }
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                Text(
-                                    text = "⏰ Hora: ${solicitud.horaTexto}  |  🏫 ${solicitud.escuelaArea}",
-                                    color = Color.DarkGray,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-
-                                if (solicitud.responsable.isNotBlank()) {
-                                    Text(
-                                        text = "👤 Responsable: ${solicitud.responsable}",
-                                        color = Color.Gray,
-                                        fontSize = 12.sp
-                                    )
                                 }
                             }
                         }

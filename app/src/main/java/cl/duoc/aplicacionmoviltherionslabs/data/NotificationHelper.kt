@@ -24,7 +24,6 @@ object NotificationHelper {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Crear el canal para Android 8.0+ habilitando vibración y luces para avisos emergentes
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -39,7 +38,10 @@ object NotificationHelper {
         }
 
         val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            // SINGLE_TOP evita destruir MainActivity y conservará la sesión activa mediante onNewIntent
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("PANTALLA_DESTINO", "detalle_solicitud")
             putExtra("SOLICITUD_ID", solicitudId)
         }
