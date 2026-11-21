@@ -3,13 +3,8 @@ package cl.duoc.aplicacionmoviltherionslabs.network
 import cl.duoc.aplicacionmoviltherionslabs.model.RecursoModel
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
-import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudRequestDto
+import retrofit2.http.*
 
-// Modelos para el Login contra usuarios-service (8081)
 data class LoginRequest(
     val correo: String,
     val password: String
@@ -24,7 +19,54 @@ data class UsuarioResponse(
     val areaEntidad: String?
 )
 
-// Interfaz para el Microservicio de Usuarios (Puerto 8081)
+// DTO que coincide 1:1 con el JSON de catalogo-service (Spring Boot)
+data class SolicitudDto(
+    val id: String,
+    val nombreActividad: String,
+    val responsable: String,
+    val escuelaArea: String,
+    val fechaTexto: String,
+    val horaTexto: String,
+    val recursosSeleccionados: String,
+    val estadoGeneral: String,
+    val estadoCta: String,
+    val estadoComunicaciones: String,
+    val estadoServiciosGenerales: String,
+    val estadoPorteria: String
+)
+
+// Extensiones para convertir sin romper tus pantallas de Android
+fun SolicitudActividad.toDto(): SolicitudDto = SolicitudDto(
+    id = id,
+    nombreActividad = nombreActividad,
+    responsable = responsable,
+    escuelaArea = escuelaArea,
+    fechaTexto = fechaTexto,
+    horaTexto = horaTexto,
+    recursosSeleccionados = recursosSeleccionados.joinToString(", "),
+    estadoGeneral = estadoGeneral,
+    estadoCta = estadoCTA,
+    estadoComunicaciones = estadoComunicaciones,
+    estadoServiciosGenerales = estadoServiciosGenerales,
+    estadoPorteria = estadoPorteria
+)
+
+fun SolicitudDto.toModel(): SolicitudActividad = SolicitudActividad(
+    id = id,
+    nombreActividad = nombreActividad,
+    responsable = responsable,
+    escuelaArea = escuelaArea,
+    fechaTexto = fechaTexto,
+    horaTexto = horaTexto,
+    estadoGeneral = estadoGeneral,
+    estadoCTA = estadoCta,
+    estadoComunicaciones = estadoComunicaciones,
+    estadoServiciosGenerales = estadoServiciosGenerales,
+    estadoPorteria = estadoPorteria,
+    recursosSeleccionados = if (recursosSeleccionados.isBlank()) emptyList()
+    else recursosSeleccionados.split(",").map { it.trim() }
+)
+
 interface UsuariosApiService {
     @POST("api/usuarios/login")
     suspend fun login(@Body request: LoginRequest): Response<UsuarioResponse>
@@ -33,7 +75,6 @@ interface UsuariosApiService {
     suspend fun obtenerUsuarios(): Response<List<UsuarioResponse>>
 }
 
-// Interfaz para el Microservicio de Catálogo (Puerto 8082)
 interface ApiService {
     @GET("api/catalogo/recursos")
     suspend fun obtenerRecursos(): Response<List<RecursoModel>>
@@ -41,9 +82,19 @@ interface ApiService {
     @GET("api/catalogo/recursos/area/{area}")
     suspend fun obtenerRecursosPorArea(@Path("area") area: String): Response<List<RecursoModel>>
 
+    // CRUD completo de Solicitudes
     @GET("api/catalogo/solicitudes")
-    suspend fun obtenerSolicitudes(): Response<List<SolicitudRequestDto>>
+    suspend fun obtenerSolicitudes(): Response<List<SolicitudDto>>
 
     @POST("api/catalogo/solicitudes")
-    suspend fun crearSolicitud(@Body solicitud: SolicitudRequestDto): Response<SolicitudRequestDto>
+    suspend fun crearSolicitud(@Body solicitud: SolicitudDto): Response<SolicitudDto>
+
+    @PUT("api/catalogo/solicitudes/{id}")
+    suspend fun actualizarSolicitud(
+        @Path("id") id: String,
+        @Body solicitud: SolicitudDto
+    ): Response<SolicitudDto>
+
+    @DELETE("api/catalogo/solicitudes/{id}")
+    suspend fun eliminarSolicitud(@Path("id") id: String): Response<Unit>
 }

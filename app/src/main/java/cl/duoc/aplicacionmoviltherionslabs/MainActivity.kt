@@ -20,12 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 
 // 1. Importación explícita del modelo centralizado
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 
-// 2. Importación directa de la persistencia
+// 2. Importación directa de la persistencia local y nube
 import cl.duoc.aplicacionmoviltherionslabs.data.PreferenciasManager
+import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioRecursos
+import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioSolicitudes
 
 // 3. Importaciones explícitas de las pantallas y ViewModels
 import cl.duoc.aplicacionmoviltherionslabs.ui.screens.LoginScreen
@@ -42,7 +45,6 @@ import cl.duoc.aplicacionmoviltherionslabs.ui.theme.AplicacionMovilTherionsLabsT
 
 class MainActivity : ComponentActivity() {
 
-    // Permite capturar clics en notificaciones cuando la Activity ya estaba abierta
     private var intentActualState = mutableStateOf<Intent?>(null)
 
     override fun onNewIntent(intent: Intent) {
@@ -63,6 +65,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val context = LocalContext.current
                     val prefsManager = remember { PreferenciasManager(context) }
+                    val coroutineScope = rememberCoroutineScope()
 
                     val loginViewModel: LoginViewModel = viewModel()
 
@@ -71,8 +74,7 @@ class MainActivity : ComponentActivity() {
                     var solicitudSeleccionada by remember { mutableStateOf<SolicitudActividad?>(null) }
                     var entidadLogueada by remember { mutableStateOf<TipoEntidad?>(null) }
 
-                    // Control de sesión y permisos para notificaciones
-                    var rolActual by remember { mutableStateOf<String?>(null) } // "coordinador", "entidad", "profesor"
+                    var rolActual by remember { mutableStateOf<String?>(null) }
                     var solicitudPendienteNotificacion by remember { mutableStateOf<String?>(null) }
 
                     val listaSolicitudes = remember {
@@ -81,7 +83,17 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Función centralizada para limpiar datos y volver al Login
+                    // Sincronización inicial con Supabase (GET recursos y GET solicitudes)
+                    LaunchedEffect(Unit) {
+                        RepositorioRecursos.sincronizarRecursosDesdeNube()
+                        val remotas = RepositorioSolicitudes.obtenerSolicitudesNube()
+                        if (remotas.isNotEmpty()) {
+                            listaSolicitudes.clear()
+                            listaSolicitudes.addAll(remotas)
+                            prefsManager.guardarSolicitudes(listaSolicitudes)
+                        }
+                    }
+
                     val realizarCerrarSesion = {
                         loginViewModel.cerrarSesion()
                         solicitudSeleccionada = null
@@ -91,23 +103,19 @@ class MainActivity : ComponentActivity() {
                         pantallaActual = "login"
                     }
 
-                    // Detectar clic desde la Notificación respetando sesión y permisos
                     val intentObservado by intentActualState
                     LaunchedEffect(intentObservado) {
                         val destino = intentObservado?.getStringExtra("PANTALLA_DESTINO")
                         val idSolicitud = intentObservado?.getStringExtra("SOLICITUD_ID")
 
                         if (destino == "detalle_solicitud" && !idSolicitud.isNullOrBlank()) {
-                            // Limpiamos los extras para evitar re-ejecuciones al recomponer
                             intentObservado?.removeExtra("PANTALLA_DESTINO")
                             intentObservado?.removeExtra("SOLICITUD_ID")
 
                             if (rolActual == null) {
-                                // Seguridad: Exigir Login primero y recordar la solicitud tocada
                                 solicitudPendienteNotificacion = idSolicitud
                                 pantallaActual = "login"
                             } else {
-                                // Si ya está logueado, dirigir estrictamente según su rol
                                 val encontrada = listaSolicitudes.find { it.id == idSolicitud }
                                 when (rolActual) {
                                     "coordinador" -> {
@@ -124,7 +132,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Transiciones animadas entre todas las pantallas
                     AnimatedContent(
                         targetState = pantallaActual,
                         transitionSpec = {
@@ -132,27 +139,22 @@ class MainActivity : ComponentActivity() {
                             val vieneDeSubpantalla = initialState in listOf("calendario", "detalle_solicitud", "solicitud")
 
                             when {
-                                // Login hacia cualquier Home (efecto de entrada suave)
                                 initialState == "login" -> {
                                     (fadeIn(animationSpec = tween(350)) + scaleIn(initialScale = 0.96f, animationSpec = tween(350)))
                                         .togetherWith(fadeOut(animationSpec = tween(250)))
                                 }
-                                // Cerrar sesión hacia Login
                                 targetState == "login" -> {
                                     fadeIn(animationSpec = tween(300))
                                         .togetherWith(fadeOut(animationSpec = tween(300)))
                                 }
-                                // Avanzar a Calendario, Detalle o Nueva Solicitud (desliza desde la derecha)
                                 esSubpantalla -> {
                                     (slideInHorizontally(animationSpec = tween(300)) { fullWidth -> fullWidth } + fadeIn(tween(300)))
                                         .togetherWith(slideOutHorizontally(animationSpec = tween(300)) { fullWidth -> -fullWidth / 3 } + fadeOut(tween(250)))
                                 }
-                                // Volver hacia atrás (desliza desde la izquierda)
                                 vieneDeSubpantalla -> {
                                     (slideInHorizontally(animationSpec = tween(300)) { fullWidth -> -fullWidth / 3 } + fadeIn(tween(300)))
                                         .togetherWith(slideOutHorizontally(animationSpec = tween(300)) { fullWidth -> fullWidth } + fadeOut(tween(250)))
                                 }
-                                // Cualquier otro cambio
                                 else -> {
                                     fadeIn(animationSpec = tween(300)).togetherWith(fadeOut(animationSpec = tween(300)))
                                 }
@@ -165,10 +167,19 @@ class MainActivity : ComponentActivity() {
                                 LoginScreen(
                                     loginViewModel = loginViewModel,
                                     onLoginSuccess = { correo ->
+                                        // Refrescamos solicitudes desde Supabase al iniciar sesión
+                                        coroutineScope.launch {
+                                            val remotas = RepositorioSolicitudes.obtenerSolicitudesNube()
+                                            if (remotas.isNotEmpty()) {
+                                                listaSolicitudes.clear()
+                                                listaSolicitudes.addAll(remotas)
+                                                prefsManager.guardarSolicitudes(listaSolicitudes)
+                                            }
+                                        }
+
                                         val correoLibreria = correo.lowercase().trim()
                                         val entidad = TipoEntidad.desdeCorreo(correoLibreria)
 
-                                        // Recuperamos si venía desde una notificación
                                         val solicitudPendiente = solicitudPendienteNotificacion?.let { id ->
                                             listaSolicitudes.find { it.id == id }
                                         }
@@ -229,28 +240,38 @@ class MainActivity : ComponentActivity() {
                                         val index = listaSolicitudes.indexOfFirst { it.id == id }
                                         if (index != -1) {
                                             val item = listaSolicitudes[index]
-                                            listaSolicitudes[index] = item.copy(
+                                            val aprobada = item.copy(
                                                 estadoGeneral = "Aprobado",
                                                 estadoComunicaciones = "Aprobado",
                                                 estadoServiciosGenerales = "Aprobado",
                                                 estadoCTA = "Aprobado",
                                                 estadoPorteria = "Aprobado"
                                             )
+                                            listaSolicitudes[index] = aprobada
                                             prefsManager.guardarSolicitudes(listaSolicitudes)
+                                            // PUT en Supabase
+                                            coroutineScope.launch {
+                                                RepositorioSolicitudes.actualizarEstadoSolicitudNube(aprobada)
+                                            }
                                         }
                                     },
                                     onRechazarSolicitud = { id ->
                                         val index = listaSolicitudes.indexOfFirst { it.id == id }
                                         if (index != -1) {
                                             val item = listaSolicitudes[index]
-                                            listaSolicitudes[index] = item.copy(
+                                            val rechazada = item.copy(
                                                 estadoGeneral = "Rechazado",
                                                 estadoComunicaciones = "Rechazado",
                                                 estadoServiciosGenerales = "Rechazado",
                                                 estadoCTA = "Rechazado",
                                                 estadoPorteria = "Rechazado"
                                             )
+                                            listaSolicitudes[index] = rechazada
                                             prefsManager.guardarSolicitudes(listaSolicitudes)
+                                            // PUT en Supabase
+                                            coroutineScope.launch {
+                                                RepositorioSolicitudes.actualizarEstadoSolicitudNube(rechazada)
+                                            }
                                         }
                                     },
                                     onVerCalendarioClick = {
@@ -289,8 +310,13 @@ class MainActivity : ComponentActivity() {
                                                     else -> itemActualizado.estadoGeneral
                                                 }
 
-                                                listaSolicitudes[index] = itemActualizado.copy(estadoGeneral = nuevoEstadoGeneral)
+                                                val finalItem = itemActualizado.copy(estadoGeneral = nuevoEstadoGeneral)
+                                                listaSolicitudes[index] = finalItem
                                                 prefsManager.guardarSolicitudes(listaSolicitudes)
+                                                // PUT en Supabase
+                                                coroutineScope.launch {
+                                                    RepositorioSolicitudes.actualizarEstadoSolicitudNube(finalItem)
+                                                }
                                             }
                                         },
                                         onCerrarSesionClick = {
@@ -332,6 +358,10 @@ class MainActivity : ComponentActivity() {
                                                 listaSolicitudes[index] = finalItem
                                                 solicitudSeleccionada = finalItem
                                                 prefsManager.guardarSolicitudes(listaSolicitudes)
+                                                // PUT en Supabase
+                                                coroutineScope.launch {
+                                                    RepositorioSolicitudes.actualizarEstadoSolicitudNube(finalItem)
+                                                }
                                             }
                                         }
                                     )
@@ -350,6 +380,10 @@ class MainActivity : ComponentActivity() {
                                     onSolicitudCreada = { nuevaSolicitud ->
                                         listaSolicitudes.add(nuevaSolicitud)
                                         prefsManager.guardarSolicitudes(listaSolicitudes)
+                                        // POST en Supabase
+                                        coroutineScope.launch {
+                                            RepositorioSolicitudes.guardarSolicitudNube(nuevaSolicitud)
+                                        }
                                         pantallaActual = "home_profesor"
                                     }
                                 )
