@@ -42,8 +42,8 @@ interface ApiService {
     suspend fun obtenerRecursosPorArea(@Path("area") area: String): Response<List<RecursoModel>>
 
     @GET("api/catalogo/solicitudes")
-    suspend fun obtenerSolicitudes(): Response<List<SolicitudActividad>>
+    suspend fun obtenerSolicitudes(): Response<List<SolicitudRequestDto>>
 
     @POST("api/catalogo/solicitudes")
-    suspend fun crearSolicitud(@Body solicitud: SolicitudRequestDto): Response<Any>
+    suspend fun crearSolicitud(@Body solicitud: SolicitudRequestDto): Response<SolicitudRequestDto>
 }
