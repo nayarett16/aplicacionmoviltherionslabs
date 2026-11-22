@@ -5,8 +5,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
     // 10.0.2.2 apunta al localhost de tu computador desde el emulador de Android
-    private const val URL_USUARIOS = "http://10.0.2.2:8081/"
-    private const val URL_CATALOGO = "http://10.0.2.2:8082/"
+    private const val URL_USUARIOS = "http://192.168.8.144:8081/"
+    private const val URL_CATALOGO = "http://192.168.8.144:8082/"
 
     private val retrofitUsuarios: Retrofit by lazy {
         Retrofit.Builder()

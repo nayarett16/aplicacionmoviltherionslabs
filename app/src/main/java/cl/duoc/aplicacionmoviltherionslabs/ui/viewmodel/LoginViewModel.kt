@@ -25,6 +25,8 @@ class LoginViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
+    private val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
+
     private val cuentasPrueba = setOf(
         "comunidad@duocuc.cl",
         "cta@duocuc.cl",
@@ -57,7 +59,7 @@ class LoginViewModel : ViewModel() {
         if (currentEmail.isBlank()) {
             emailErr = "El correo es obligatorio"
             hasError = true
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(currentEmail).matches()) {
+        } else if (!emailRegex.matches(currentEmail)) {
             emailErr = "Ingrese un correo válido"
             hasError = true
         }
