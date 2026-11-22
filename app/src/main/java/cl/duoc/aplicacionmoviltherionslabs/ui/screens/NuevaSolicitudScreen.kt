@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.aplicacionmoviltherionslabs.data.NotificationHelper
 import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioRecursos
 import cl.duoc.aplicacionmoviltherionslabs.model.RecursoModel
@@ -30,6 +31,7 @@ import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.ConfirmacionDialog
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.SeleccionadorFechaDialog
 import cl.duoc.aplicacionmoviltherionslabs.ui.components.SeleccionadorHoraDialog
+import cl.duoc.aplicacionmoviltherionslabs.ui.viewmodel.SolicitudViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -45,14 +47,15 @@ data class RecursoSeleccionable(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaSolicitudScreen(
+    solicitudViewModel: SolicitudViewModel = viewModel(),
     onVolverClick: () -> Unit = {},
     onVerCalendarioClick: () -> Unit = {},
     onSolicitudCreada: (SolicitudActividad) -> Unit = {}
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val apiState by solicitudViewModel.uiState.collectAsState()
 
-    // Permiso de notificaciones para Android 13 (API 33)+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { }
@@ -284,6 +287,16 @@ fun NuevaSolicitudScreen(
                         )
                     }
 
+                    apiState.error?.let { apiErr ->
+                        Text(
+                            text = apiErr,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Button(
@@ -301,6 +314,7 @@ fun NuevaSolicitudScreen(
                                 mostrarConfirmacion = true
                             }
                         },
+                        enabled = !apiState.isLoading,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFFFC107),
                             contentColor = Color(0xFF002A5C)
@@ -311,7 +325,7 @@ fun NuevaSolicitudScreen(
                             .height(48.dp)
                     ) {
                         Text(
-                            text = "Generar Comprobante de Solicitud",
+                            text = if (apiState.isLoading) "Guardando en Supabase..." else "Generar Comprobante de Solicitud",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
@@ -401,7 +415,7 @@ fun NuevaSolicitudScreen(
                 // 1. Vibración háptica
                 try {
                     val vibrator =
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             val vibratorManager =
                                 context.getSystemService(android.content.Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
                             vibratorManager.defaultVibrator
@@ -410,7 +424,7 @@ fun NuevaSolicitudScreen(
                             context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as android.os.Vibrator
                         }
 
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         vibrator.vibrate(
                             android.os.VibrationEffect.createOneShot(
                                 400,
@@ -425,8 +439,11 @@ fun NuevaSolicitudScreen(
                     e.printStackTrace()
                 }
 
-                // 2. Generación de ID y objeto Solicitud
+                // 2. Generación de ID y objeto Solicitud local
                 val idGenerado = System.currentTimeMillis().toString()
+                val listaRecursosTexto = recursosList.filter { it.seleccionado }
+                    .map { "${it.recurso.nombre} (${it.recurso.area})" }
+
                 val nuevaSolicitud = SolicitudActividad(
                     id = idGenerado,
                     nombreActividad = nombreActividad,
@@ -434,23 +451,30 @@ fun NuevaSolicitudScreen(
                     escuelaArea = escuelaArea,
                     fechaTexto = fechaTexto,
                     horaTexto = horaTexto,
-                    recursosSeleccionados = recursosList.filter { it.seleccionado }
-                        .map { "${it.recurso.nombre} (${it.recurso.area})" },
+                    recursosSeleccionados = listaRecursosTexto,
                     estadoComunicaciones = "Pendiente",
                     estadoServiciosGenerales = "Pendiente",
                     estadoCTA = "Pendiente",
                     estadoPorteria = "Pendiente"
                 )
 
-                // 3. Disparar notificación de sistema
+                // 3. ENVIAR AL MICROSERVICIO DE SOLICITUDES (PUERTO 8083 -> SUPABASE)
+                val resumenDescripcion = "Área: $escuelaArea | Fecha: $fechaTexto $horaTexto | Recursos: ${listaRecursosTexto.joinToString(", ")}"
+                solicitudViewModel.enviarSolicitud(
+                    correoUsuario = responsable,
+                    titulo = nombreActividad,
+                    descripcion = resumenDescripcion
+                )
+
+                // 4. Disparar notificación de sistema
                 NotificationHelper.mostrarNotificacionSolicitud(
                     context = context,
                     titulo = "¡Solicitud Creada con Éxito!",
-                    mensaje = "Tu reserva para '$nombreActividad' ha sido registrada.",
+                    mensaje = "Tu reserva para '$nombreActividad' ha sido registrada en Supabase.",
                     solicitudId = idGenerado
                 )
 
-                // 4. Retornar evento
+                // 5. Retornar evento a la navegación
                 onSolicitudCreada(nuevaSolicitud)
             },
             onDismiss = { mostrarConfirmacion = false }

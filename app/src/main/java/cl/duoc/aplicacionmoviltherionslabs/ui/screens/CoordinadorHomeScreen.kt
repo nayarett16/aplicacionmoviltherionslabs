@@ -15,13 +15,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.aplicacionmoviltherionslabs.data.RepositorioRecursos
 import cl.duoc.aplicacionmoviltherionslabs.model.SolicitudActividad
+import cl.duoc.aplicacionmoviltherionslabs.ui.viewmodel.SolicitudViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CoordinadorHomeScreen(
     solicitudes: List<SolicitudActividad> = emptyList(),
+    solicitudViewModel: SolicitudViewModel = viewModel(),
     onSolicitudClick: (SolicitudActividad) -> Unit = {},
     onAprobarSolicitud: (String) -> Unit = {},
     onRechazarSolicitud: (String) -> Unit = {},
@@ -31,11 +34,36 @@ fun CoordinadorHomeScreen(
     var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
     var mensajeAlerta by remember { mutableStateOf<String?>(null) }
 
+    val apiState by solicitudViewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        solicitudViewModel.cargarSolicitudes()
+    }
+
     val todosLosRecursos = remember { RepositorioRecursos.obtenerTodosLosRecursos() }
 
-    val mapaStockGlobal = remember(solicitudes, todosLosRecursos) {
+    val solicitudesCombinadas = remember(solicitudes, apiState.listaSolicitudes) {
+        val desdeApi = apiState.listaSolicitudes.map { dto ->
+            SolicitudActividad(
+                id = (dto.id ?: System.currentTimeMillis()).toString(),
+                nombreActividad = dto.titulo,
+                responsable = dto.usuarioCorreo,
+                escuelaArea = "Sincronizado Supabase",
+                fechaTexto = dto.fechaCreacion?.take(10) ?: "Sin fecha",
+                horaTexto = "08:00",
+                recursosSeleccionados = listOf(dto.descripcion),
+                estadoComunicaciones = dto.estado,
+                estadoServiciosGenerales = dto.estado,
+                estadoCTA = dto.estado,
+                estadoPorteria = dto.estado
+            )
+        }
+        (solicitudes + desdeApi).distinctBy { it.nombreActividad }
+    }
+
+    val mapaStockGlobal = remember(solicitudesCombinadas, todosLosRecursos) {
         todosLosRecursos.associate { recurso ->
-            val cantidadUsada = solicitudes.count { solicitud ->
+            val cantidadUsada = solicitudesCombinadas.count { solicitud ->
                 solicitud.estadoGeneral == "Aprobado" &&
                         solicitud.recursosSeleccionados.any { it.contains(recurso.nombre, ignoreCase = true) }
             }
@@ -67,7 +95,6 @@ fun CoordinadorHomeScreen(
             )
         }
     ) { paddingValues ->
-        // UN SOLO LAZYCOLUMN PARA QUE TODA LA PANTALLA HAGA SCROLL JUNTA
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -161,11 +188,22 @@ fun CoordinadorHomeScreen(
                 }
             }
 
-            // ITEM 3: ALERTA DE BLOQUEO POR FALTA DE STOCK (SI APLICA)
+            // ITEM 3: ALERTA DE BLOQUEO POR FALTA DE STOCK O ERROR DE RED
             mensajeAlerta?.let { alerta ->
                 item {
                     Text(
                         text = alerta,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            apiState.error?.let { apiError ->
+                item {
+                    Text(
+                        text = "⚠️ $apiError",
                         color = MaterialTheme.colorScheme.error,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -192,7 +230,7 @@ fun CoordinadorHomeScreen(
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            text = "${solicitudes.size}",
+                            text = "${solicitudesCombinadas.size}",
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
@@ -203,7 +241,7 @@ fun CoordinadorHomeScreen(
             }
 
             // ITEM 5: TARJETAS DE SOLICITUDES
-            if (solicitudes.isEmpty()) {
+            if (solicitudesCombinadas.isEmpty()) {
                 item {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
@@ -217,7 +255,7 @@ fun CoordinadorHomeScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "No hay solicitudes pendientes de revisión.",
+                                text = if (apiState.isLoading) "Cargando solicitudes..." else "No hay solicitudes pendientes de revisión.",
                                 color = Color.Gray,
                                 fontSize = 14.sp
                             )
@@ -225,7 +263,7 @@ fun CoordinadorHomeScreen(
                     }
                 }
             } else {
-                items(solicitudes, key = { it.id }) { solicitud ->
+                items(solicitudesCombinadas, key = { it.id }) { solicitud ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
                         shape = RoundedCornerShape(8.dp),
