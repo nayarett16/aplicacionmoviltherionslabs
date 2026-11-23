@@ -1,46 +1,41 @@
 package cl.duoc.aplicacionmoviltherionslabs.network
 
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    private const val URL_USUARIOS = "http://192.168.8.144:8081/"
-    private const val URL_CATALOGO = "http://192.168.8.144:8082/"
-    private const val URL_SOLICITUDES = "http://192.168.8.144:8083/"
+    private const val GATEWAY_URL = "https://therionlabs-gateway.onrender.com/"
 
-    private val retrofitUsuarios: Retrofit by lazy {
+    private val okHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
+    private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(URL_USUARIOS)
+            .baseUrl(GATEWAY_URL)
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
-    private val retrofitCatalogo: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(URL_CATALOGO)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-
-    private val retrofitSolicitudes: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(URL_SOLICITUDES)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-
-    // Cliente para usuarios-service (8081)
+    // Cliente para usuarios-service (/api/usuarios)
     val usuariosApi: UsuariosApiService by lazy {
-        retrofitUsuarios.create(UsuariosApiService::class.java)
+        retrofit.create(UsuariosApiService::class.java)
     }
 
-    // Cliente para catalogo-service (8082) - usado por RepositorioRecursos
+    // Cliente para catalogo-service (/api/catalogo/...)
     val apiService: ApiService by lazy {
-        retrofitCatalogo.create(ApiService::class.java)
+        retrofit.create(ApiService::class.java)
     }
 
-    // Cliente para solicitudes-service (8083)
+    // Cliente para solicitudes-service (/api/solicitudes)
     val solicitudesApi: SolicitudesApiService by lazy {
-        retrofitSolicitudes.create(SolicitudesApiService::class.java)
+        retrofit.create(SolicitudesApiService::class.java)
     }
 }
