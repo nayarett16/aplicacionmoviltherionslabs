@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,22 +44,28 @@ fun CoordinadorHomeScreen(
     val todosLosRecursos = remember { RepositorioRecursos.obtenerTodosLosRecursos() }
 
     val solicitudesCombinadas = remember(solicitudes, apiState.listaSolicitudes) {
-        val desdeApi = apiState.listaSolicitudes.map { dto ->
+        val desdeApi = apiState.listaSolicitudes.mapIndexed { index, dto ->
+            val estadoNormalizado = when (dto.estado.orEmpty().uppercase()) {
+                "APROBADO", "APROBADA" -> "Aprobado"
+                "RECHAZADO", "RECHAZADA" -> "Rechazado"
+                else -> "Pendiente"
+            }
             SolicitudActividad(
-                id = (dto.id ?: System.currentTimeMillis()).toString(),
-                nombreActividad = dto.titulo,
-                responsable = dto.usuarioCorreo,
+                id = (dto.id ?: "api_$index").toString(),
+                nombreActividad = dto.titulo.orEmpty().ifBlank { "Sin título" },
+                responsable = dto.usuarioCorreo.orEmpty(),
                 escuelaArea = "Sincronizado Supabase",
                 fechaTexto = dto.fechaCreacion?.take(10) ?: "Sin fecha",
                 horaTexto = "08:00",
-                recursosSeleccionados = listOf(dto.descripcion),
-                estadoComunicaciones = dto.estado,
-                estadoServiciosGenerales = dto.estado,
-                estadoCTA = dto.estado,
-                estadoPorteria = dto.estado
+                recursosSeleccionados = listOf(dto.descripcion.orEmpty()),
+                estadoGeneral = estadoNormalizado,
+                estadoComunicaciones = estadoNormalizado,
+                estadoServiciosGenerales = estadoNormalizado,
+                estadoCTA = estadoNormalizado,
+                estadoPorteria = estadoNormalizado
             )
         }
-        (solicitudes + desdeApi).distinctBy { it.nombreActividad }
+        (solicitudes + desdeApi).distinctBy { it.id }
     }
 
     val mapaStockGlobal = remember(solicitudesCombinadas, todosLosRecursos) {
@@ -263,7 +270,10 @@ fun CoordinadorHomeScreen(
                     }
                 }
             } else {
-                items(solicitudesCombinadas, key = { it.id }) { solicitud ->
+                itemsIndexed(
+                    items = solicitudesCombinadas,
+                    key = { index, solicitud -> "${solicitud.id}_$index" }
+                ) { _, solicitud ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDE7)),
                         shape = RoundedCornerShape(8.dp),

@@ -10,7 +10,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -46,7 +46,7 @@ fun CalendarioScreen(
         if (fechaSeleccionadaTexto.isBlank()) {
             emptyList()
         } else {
-            solicitudes.filter { it.fechaTexto == fechaSeleccionadaTexto }
+            solicitudes.filter { it.fechaTexto.trim() == fechaSeleccionadaTexto.trim() }
         }
     }
 
@@ -95,7 +95,6 @@ fun CalendarioScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Animación suave en el título al cambiar de día
             AnimatedContent(
                 targetState = fechaSeleccionadaTexto,
                 transitionSpec = {
@@ -116,7 +115,6 @@ fun CalendarioScreen(
                 )
             }
 
-            // Animación al filtrar eventos por día o mostrar mensajes vacíos
             AnimatedContent(
                 targetState = Pair(fechaSeleccionadaTexto, solicitudesDelDia),
                 transitionSpec = {
@@ -160,10 +158,10 @@ fun CalendarioScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(
+                            itemsIndexed(
                                 items = eventos,
-                                key = { it.id }
-                            ) { solicitud ->
+                                key = { index, solicitud -> "${solicitud.id}_$index" }
+                            ) { _, solicitud ->
                                 Card(
                                     colors = CardDefaults.cardColors(containerColor = Color.White),
                                     shape = RoundedCornerShape(8.dp),
