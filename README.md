@@ -4,13 +4,13 @@ Aplicación móvil desarrollada en Android Studio (Kotlin + Jetpack Compose) con
 
 ---
 
-##  Autores / Integrantes
+## Autores / Integrantes
 - **Antonella Valdivia** ([@anto589](https://github.com/anto589))
 - **Nayarett Vergara** ([@nayarett16](https://github.com/nayarett16))
 
 ---
 
-##  Características Principales
+## Características Principales
 - **Autenticación por roles conectada a microservicios:** Acceso diferenciado validado contra `usuarios-service` para Docentes/Comunidad (`comunidad@duocuc.cl`), Coordinador de Extensión (`extension@duocuc.cl`) y Áreas Aprobadoras (`cta@duocuc.cl`, `comunicaciones@duocuc.cl`, `servicios@duocuc.cl`, `porteria@duocuc.cl`).
 - **Gestión de solicitudes de recursos en la nube y agenda de sede:** Formulario interactivo para solicitar equipamiento y materiales institucionales con validaciones en tiempo real (mínimo de anticipación, restricción de domingos y feriados nacionales) sincronizado con Supabase PostgreSQL y calendario interactivo de disponibilidad.
 - **Control de inventario y stock por área:** Visualización en tiempo real del inventario y stock disponible por cada entidad responsable (`CTA`, `Comunicaciones`, `Servicios Generales`, `Portería`).
@@ -31,16 +31,16 @@ El proyecto aplica el patrón de arquitectura **Model-View-ViewModel (MVVM)** en
 
 ---
 
-##  Endpoints Utilizados (Microservicios y API Externa)
+## Endpoints Utilizados (Microservicios y API Externa)
 
 ### 1. Microservicios Propios (Spring Cloud Gateway + Render + Supabase)
-Todas las peticiones móviles se centralizan a través de **Spring Cloud Gateway** (`https://therionlabs-gateway.onrender.com/`) :
+Todas las peticiones móviles se centralizan a través de **Spring Cloud Gateway** (`https://therionlabs-gateway.onrender.com/`):
 
 | Servicio | Puerto Local | URL Producción (Render) | Método | Endpoint | Descripción |
 | :--- | :---: | :--- | :---: | :--- | :--- |
 | **API Gateway** | `8080` | `https://therionlabs-gateway.onrender.com` | — | `/api/**` | Punto único de entrada y enrutamiento |
 | **Usuarios Service** | `8081` | `https://usuarios-service-....onrender.com` | `POST` | `/api/usuarios/login` | Validación de credenciales y rol institucional |
-| **Usuarios Service** | `8081` | `https://usuarios-service-....onrender.com` | `GET` | `/api/usuarios | Consulta de usuarios registrados |
+| **Usuarios Service** | `8081` | `https://usuarios-service-....onrender.com` | `GET` | `/api/usuarios` | Consulta de usuarios registrados |
 | **Catálogo Service** | `8082` | `https://catalogo-service-....onrender.com` | `GET` | `/api/catalogo/recursos` | Listado de recursos y stock disponible |
 | **Catálogo Service** | `8082` | `https://catalogo-service-....onrender.com` | `GET` | `/api/catalogo/recursos/area/{area}` | Filtrado de inventario de recursos por área |
 | **Solicitudes Service** | `8083` | `https://solicitudes-service-enlb.onrender.com` | `GET` | `/api/solicitudes` | Obtención de solicitudes desde Supabase |
@@ -56,8 +56,9 @@ Todas las peticiones móviles se centralizan a través de **Spring Cloud Gateway
 
 ---
 
-##  Tecnologías Utilizadas y Colaboración
+## Tecnologías Utilizadas y Colaboración
 - **Frontend Móvil:** Kotlin, Jetpack Compose, Material Design 3, Retrofit 2, OkHttp, Coroutines / StateFlow.
+- **Pruebas Unitarias:** JUnit 4, MockK, Kotlinx Coroutines Test (Cobertura > 80% en capa ViewModel).
 - **Backend y Nube:** Java / Spring Boot, Spring Cloud Gateway, Render Cloud, PostgreSQL (Supabase).
 - **Persistencia Local y Nativos:** SharedPreferences (Gson), Android Notification Manager, LocalHapticFeedback.
 - **Control de Versiones y Planificación:** Git / GitHub (repositorios colaborativos móvil y microservicios) y planificación Kanban en **Trello**.
@@ -71,11 +72,11 @@ Todas las peticiones móviles se centralizan a través de **Spring Cloud Gateway
 
 ---
 
-## pasos para Ejecutar la Aplicación
+## Pasos para Ejecutar la Aplicación
 
 ### Modo 1: Ejecución Directa Conectada a Producción (Render + Supabase)
 La aplicación ya está configurada en `RetrofitClient.kt` para consumir directamente el Gateway desplegado en Render (`https://therionlabs-gateway.onrender.com/`):
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone [https://github.com/nayarett16/aplicaci%C3%B3nm%C3%B3viltherionslabs.git](https://github.com/nayarett16/aplicaci%C3%B3nm%C3%B3viltherionslabs.git)
+   git clone [https://github.com/nayarett16/aplicaciónmóviltherionslabs.git](https://github.com/nayarett16/aplicaciónmóviltherionslabs.git)
